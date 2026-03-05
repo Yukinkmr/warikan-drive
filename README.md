@@ -102,7 +102,7 @@ DriveSplit/
 ### 1. リポジトリをクローン
 
 ```bash
-git clone <あなたのリポジトリURL>
+git clone https://github.com/Yukinkmr/warikan-drive
 cd DriveSplit
 ```
 
