@@ -1,0 +1,53 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg: #0f1117;
+  --surface: #1a1d27;
+  --card: #21253a;
+  --border: #2e3350;
+  --accent: #4f7dff;
+  --accent-dim: #1e2d5e;
+  --green: #10b981;
+  --green-dim: #0d2e23;
+  --red: #ef4444;
+  --text: #e8eaf6;
+  --muted: #7b82a8;
+  --label: #a0a8cc;
+  --input-bg: #1a1d27;
+  --header-bg: linear-gradient(135deg, #0d1535 0%, #1a1d27 100%);
+  --stat-bg: #1a1d27;
+  --glow: 0 0 0 1px #4f7dff55, 0 4px 24px #4f7dff22;
+}
+
+[data-theme="light"] {
+  --bg: #f1f5f9;
+  --surface: #ffffff;
+  --card: #ffffff;
+  --border: #e2e8f0;
+  --accent: #3b6fff;
+  --accent-dim: #dbeafe;
+  --green: #059669;
+  --green-dim: #d1fae5;
+  --red: #dc2626;
+  --text: #0f172a;
+  --muted: #64748b;
+  --label: #475569;
+  --input-bg: #f8fafc;
+  --header-bg: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%);
+  --stat-bg: #f8fafc;
+  --glow: 0 0 0 1px #3b6fff55, 0 4px 24px #3b6fff22;
+}
+
+body {
+  font-family: "Inter", "Helvetica Neue", sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  transition: background 0.2s, color 0.2s;
+}
+
+input[type="range"] {
+  accent-color: var(--accent);
+}
