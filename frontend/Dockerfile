@@ -9,6 +9,8 @@ FROM base AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
+# public が無い場合に備えて空ディレクトリを作成（Next.js は public が無くても動作する）
+RUN mkdir -p /app/public
 ENV NEXT_TELEMETRY_DISABLED=1
 RUN npm run build
 
