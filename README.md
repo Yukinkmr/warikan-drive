@@ -30,7 +30,7 @@
 
 | レイヤー | 技術 |
 |----------|------|
-| フロントエンド | Next.js 14 (App Router) + TypeScript |
+| フロントエンド | Next.js 16 (App Router) + React 19 + TypeScript |
 | スタイリング | Tailwind CSS |
 | バックエンド | FastAPI (Python 3.11) + Pydantic v2 |
 | ORM | SQLAlchemy |
@@ -57,6 +57,7 @@ DriveSplit/
 ├── frontend/                     # Next.js
 │   ├── Dockerfile
 │   ├── package.json
+│   ├── package-lock.json         # npm install で生成（再現ビルド用）
 │   ├── tailwind.config.ts
 │   ├── tsconfig.json
 │   └── src/
@@ -103,7 +104,7 @@ DriveSplit/
 
 ```bash
 git clone https://github.com/Yukinkmr/warikan-drive
-cd DriveSplit
+cd warikan-drive
 ```
 
 ### 2. 環境変数ファイルを作成
@@ -167,6 +168,10 @@ docker compose down -v
 
 - **API キー**  
   Google Maps Routes API のキーは [Google Cloud Console](https://console.cloud.google.com/) でプロジェクトを作成し、Routes API を有効化して取得します。
+- **フロントエンドの Docker ビルド**  
+  フロントエンドの Dockerfile では `npm install` を使用しているため、`package-lock.json` がなくても `docker compose up --build` でビルドできます。再現性を高めたい場合は、事前に `cd frontend && npm install` を実行して `package-lock.json` を生成・コミットしたうえで、Dockerfile の `npm install` を `npm ci` に戻すとよいです。
+- **Node.js バージョン**  
+  フロントエンド（Next.js 16）は Node.js 20.9 以上を想定しています。Docker では node:20-alpine を使用しています。
 - **バックエンド単体**  
   DB だけ Docker で動かし、バックエンドを手元で実行する場合は、`.env` の `DATABASE_URL` を `postgresql://postgres:postgres@localhost:5432/warikan_drive` にし、`docker compose up db -d` のあと `cd backend && uvicorn main:app --reload` で起動できます。
 - **フロントエンド単体**  

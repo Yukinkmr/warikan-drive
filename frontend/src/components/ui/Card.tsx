@@ -8,16 +8,9 @@ export function Card({
   return (
     <div
       className={cn(
-        "rounded-[14px] border border-border bg-card p-4",
-        "shadow-[var(--tw-shadow)]",
+        "card rounded-[14px] border border-border bg-card p-4",
         className
       )}
-      style={{
-        boxShadow:
-          "var(--card) === #ffffff"
-            ? "0 1px 4px rgba(0,0,0,0.07)"
-            : "none",
-      }}
       {...props}
     >
       {children}
