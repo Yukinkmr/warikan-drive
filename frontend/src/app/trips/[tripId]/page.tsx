@@ -1,8 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { use, useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { tripsApi, daysApi, routesApi } from "@/lib/api";
 import type { Trip, Day, Route, RouteSegment } from "@/types";
 import type { PaymentMethod } from "@/types";
@@ -15,11 +15,12 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { useAuth } from "@/contexts/AuthContext";
 import { todayStr } from "@/lib/utils";
 
-export default function TripDetailPage() {
-  const params = useParams();
+type PageProps = { params: Promise<{ tripId: string }> };
+
+export default function TripDetailPage({ params }: PageProps) {
+  const { tripId } = use(params);
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
-  const tripId = params.tripId as string;
   const [trip, setTrip] = useState<Trip | null>(null);
   const [days, setDays] = useState<Day[]>([]);
   const [routesByDayId, setRoutesByDayId] = useState<Record<string, Route[]>>(

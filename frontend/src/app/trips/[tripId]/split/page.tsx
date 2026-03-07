@@ -1,8 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { use, useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import {
   tripsApi,
   daysApi,
@@ -26,11 +26,12 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { useAuth } from "@/contexts/AuthContext";
 import { formatYen } from "@/lib/utils";
 
-export default function SplitPage() {
-  const params = useParams();
+type PageProps = { params: Promise<{ tripId: string }> };
+
+export default function SplitPage({ params }: PageProps) {
+  const { tripId } = use(params);
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
-  const tripId = params.tripId as string;
   const [trip, setTrip] = useState<Trip | null>(null);
   const [days, setDays] = useState<Day[]>([]);
   const [routesByDayId, setRoutesByDayId] = useState<Record<string, Route[]>>(
