@@ -3,7 +3,7 @@ export const API_BASE =
 const BASE = API_BASE;
 export const AUTH_TOKEN_STORAGE_KEY = "warikan-drive-auth-token";
 
-function getAuthHeaders() {
+function getAuthHeaders(): Record<string, string> {
   if (typeof window === "undefined") return {};
   const token = localStorage.getItem(AUTH_TOKEN_STORAGE_KEY);
   return token ? { Authorization: `Bearer ${token}` } : {};
@@ -20,13 +20,16 @@ async function fetchApi<T>(
 ): Promise<T> {
   const { params, ...init } = options ?? {};
   const url = params ? `${BASE}${path}?${new URLSearchParams(params)}` : `${BASE}${path}`;
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    ...getAuthHeaders(),
+  };
+  if (init.headers && typeof init.headers === "object" && !Array.isArray(init.headers) && !(init.headers instanceof Headers)) {
+    Object.assign(headers, init.headers);
+  }
   const res = await fetch(url, {
     ...init,
-    headers: {
-      "Content-Type": "application/json",
-      ...getAuthHeaders(),
-      ...init.headers,
-    },
+    headers,
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({ detail: res.statusText }));

@@ -7,6 +7,24 @@ on:
     branches: [main]
 
 jobs:
+  # main への push 時に Supabase へマイグレーションを実行。GitHub の Settings → Secrets に DATABASE_URL を登録すると有効になる
+  migrate:
+    name: DB Migrate
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    defaults:
+      run:
+        working-directory: backend
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install -r requirements.txt
+      - run: alembic upgrade head
+
   backend:
     name: Backend
     runs-on: ubuntu-latest
