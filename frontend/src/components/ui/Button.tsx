@@ -23,7 +23,7 @@ export function Button({
       disabled={disabled}
       className={cn(
         "rounded-2xl border px-4 py-3 text-sm font-semibold tracking-tight transition-all duration-200 ease-out",
-        disabled && "cursor-not-allowed border-border bg-surface text-muted opacity-70",
+        disabled && "pointer-events-none cursor-not-allowed border-border bg-surface text-muted opacity-70", // disabled 時ホバーしても反応しないように
         !disabled && variant === "primary" && "border-transparent bg-accent text-white shadow-glow hover:scale-[1.02] hover:opacity-95 active:scale-[0.98]",
         !disabled && variant === "ghost" && "border-border bg-surface text-label hover:scale-[1.02] hover:bg-border/50 hover:border-border active:scale-[0.98]",
         !disabled && variant === "green" && "border-transparent bg-green text-white hover:scale-[1.02] hover:opacity-95 active:scale-[0.98]",

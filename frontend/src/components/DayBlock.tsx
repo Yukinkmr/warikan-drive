@@ -63,6 +63,7 @@ export function DayBlock({
           loading={loadingRouteId === r.id}
           dayDate={day.date}
           onUpdate={onUpdateRoute}
+          onUpdateDate={(routeId, value) => onUpdateRoute(routeId, "day_date", value)}
           onRemove={
             routes.length > 1
               ? () => onRemoveRoute(r.id)
