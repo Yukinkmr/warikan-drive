@@ -209,7 +209,7 @@ export function RouteMap({
             }`}
           >
             <div className="text-lg text-text sm:text-xl">
-              {loading ? "再検索中…" : "ルートを切替中…"}
+              {loading ? "検索中…" : "ルートを切替中…"}
             </div>
           </div>
         )}

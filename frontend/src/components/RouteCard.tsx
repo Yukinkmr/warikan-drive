@@ -9,6 +9,9 @@ import { RouteMap } from "@/components/RouteMap";
 import { PlaceInput } from "@/components/PlaceInput";
 import { formatYen } from "@/lib/utils";
 
+const HOURS = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, "0"));
+const MINUTES = Array.from({ length: 60 }, (_, i) => String(i).padStart(2, "0"));
+
 export function RouteCard({
   route,
   idx,
@@ -50,6 +53,15 @@ export function RouteCard({
       ? new Date(route.departure_time).toTimeString().slice(0, 5)
       : "09:00";
   const timeType: RouteTimeType = route.time_type ?? "DEPARTURE";
+  const [selectedHour, selectedMinute] = departureTime.split(":");
+
+  function updateTime(nextHour: string, nextMinute: string) {
+    onUpdate(
+      route.id,
+      "departure_time",
+      `${dayDate}T${nextHour}:${nextMinute}:00+09:00`
+    );
+  }
 
   async function handleSearch() {
     await Promise.resolve(onSearch());
@@ -124,18 +136,33 @@ export function RouteCard({
               到着
             </button>
           </div>
-          <input
-            type="time"
-            value={departureTime}
-            onChange={(e) =>
-              onUpdate(
-                route.id,
-                "departure_time",
-                `${dayDate}T${e.target.value}:00+09:00`
-              )
-            }
-            className="w-[120px] rounded-2xl border border-border bg-inputBg px-4 py-3 text-sm text-text outline-none transition focus:border-accent"
-          />
+          <div className="flex items-center gap-2">
+            <select
+              value={selectedHour}
+              onChange={(e) => updateTime(e.target.value, selectedMinute)}
+              className="appearance-none rounded-2xl border border-border bg-inputBg px-3 py-2 text-sm text-text outline-none transition focus:border-accent"
+            >
+              {HOURS.map((hour) => (
+                <option key={hour} value={hour}>
+                  {hour}
+                </option>
+              ))}
+            </select>
+            時
+            <span className="text-sm font-medium text-label">:</span>
+            <select
+              value={selectedMinute}
+              onChange={(e) => updateTime(selectedHour, e.target.value)}
+              className="appearance-none rounded-2xl border border-border bg-inputBg px-3 py-2 text-sm text-text outline-none transition focus:border-accent"
+            >
+              {MINUTES.map((minute) => (
+                <option key={minute} value={minute}>
+                  {minute}
+                </option>
+              ))}
+            </select>
+            分
+          </div>
         </div>
       </div>
       <div className="mt-3 flex flex-wrap gap-2">
@@ -151,7 +178,7 @@ export function RouteCard({
               ? "🔄 再検索"
               : "🔍 経路を検索"}
         </Button>
-        <Button
+        {/* <Button
         onClick={() => setOpen((o) => !o)}
         variant="ghost"
         className={`flex-1 text-xs ${
@@ -162,7 +189,7 @@ export function RouteCard({
         disabled={segments.length === 0}
         >
         {open ? "▲ 閉じる" : "▼ 経路を選ぶ"}
-        </Button>
+        </Button> */}
         <Button
         onClick={onToggle}
         variant="ghost"
