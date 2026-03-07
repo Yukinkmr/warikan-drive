@@ -450,21 +450,15 @@ export default function HomePage() {
         <main className="p-4 pb-8 sm:p-5 md:p-6 md:pb-10 lg:p-8">
           <div className="mb-5 flex items-center justify-between gap-3">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted">
-                Trips
-              </p>
-              <h2 className="mt-1.5 text-lg font-bold tracking-tight text-text sm:text-xl">
-                Your trips
+              <h2 className="text-lg font-bold tracking-tight text-text sm:text-xl">
+                TRIPS
               </h2>
-              <p className="mt-1 text-sm text-muted">
-                この一覧と中の履歴は、現在ログイン中のユーザーだけに紐づきます。
-              </p>
             </div>
             <button
               type="button"
               onClick={handleOpenCreateModal}
               disabled={creating}
-              className="rounded-2xl bg-accent px-4 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+              className="shrink-0 whitespace-nowrap rounded-2xl bg-accent px-4 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {creating ? "作成中…" : "＋ 新しい旅行"}
             </button>
@@ -642,6 +636,13 @@ export default function HomePage() {
                         >
                           キャンセル
                         </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteTrip(trip.id, trip.name)}
+                          className="rounded-2xl border border-red/30 bg-red/10 px-3 py-2 text-xs font-medium text-red transition hover:bg-red/20"
+                        >
+                          削除
+                        </button>
                       </>
                     ) : (
                       <button
@@ -652,16 +653,9 @@ export default function HomePage() {
                         }}
                         className="rounded-2xl border border-border bg-surface px-3 py-2 text-xs font-medium text-label transition hover:bg-border/50"
                       >
-                        名前の変更
+                        編集
                       </button>
                     )}
-                    <button
-                      type="button"
-                      onClick={() => handleDeleteTrip(trip.id, trip.name)}
-                      className="rounded-2xl border border-red/30 bg-red/10 px-3 py-2 text-xs font-medium text-red transition hover:bg-red/20"
-                    >
-                      削除
-                    </button>
                     <Link
                       href={`/trips/${trip.id}`}
                       className="rounded-2xl bg-accent px-3 py-2 text-xs font-semibold text-white transition hover:opacity-90"
