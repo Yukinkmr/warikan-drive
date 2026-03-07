@@ -118,41 +118,44 @@ export default function HomePage() {
           </div>
 
           <div
-            className="rounded-[28px] border border-white/10 px-5 py-6 shadow-[0_20px_80px_rgba(0,0,0,0.25)] sm:px-6"
+            className="rounded-[28px] px-5 py-6 sm:px-6"
             style={{
-              background:
-                "linear-gradient(160deg, color-mix(in srgb, var(--header-bg) 88%, transparent) 0%, color-mix(in srgb, var(--card-bg) 92%, transparent) 100%)",
+              background: "var(--auth-panel-bg)",
+              border: "1px solid var(--auth-panel-border)",
+              boxShadow: "var(--auth-shadow)",
             }}
           >
             <div className="mb-6 flex items-start justify-between gap-4">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/55">
+                <p className="text-xs font-semibold uppercase tracking-[0.2em]" style={{ color: "var(--auth-muted)" }}>
                   Warikan Drive
                 </p>
-                <h1 className="mt-2 text-3xl font-bold tracking-tight text-white">
+                <h1 className="mt-2 text-3xl font-bold tracking-tight" style={{ color: "var(--auth-title)" }}>
                   ログイン / 新規登録
                 </h1>
-                <p className="mt-2 text-sm text-white/70">
+                <p className="mt-2 text-sm" style={{ color: "var(--auth-body)" }}>
                   ログインすると、自分の旅行履歴と割り勘データだけを表示します。
                 </p>
               </div>
-              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white/10 text-3xl">
+              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl text-3xl" style={{ background: "var(--auth-icon-bg)" }}>
                 🚗
               </div>
             </div>
 
-            <div className="mb-5 flex rounded-2xl border border-white/10 bg-white/5 p-1">
+            <div className="mb-5 flex rounded-2xl p-1" style={{ border: "1px solid var(--auth-tab-border)", background: "var(--auth-tab-bg)" }}>
               <button
                 type="button"
                 onClick={() => {
                   setMode("login");
                   setAuthError(null);
                 }}
-                className={`flex-1 rounded-xl px-4 py-2.5 text-sm font-semibold transition ${
-                  mode === "login"
-                    ? "bg-white text-slate-900"
-                    : "text-white/70 hover:text-white"
-                }`}
+                className="flex-1 rounded-xl px-4 py-2.5 text-sm font-semibold transition"
+                style={mode === "login" ? {
+                  background: "var(--auth-tab-active-bg)",
+                  color: "var(--auth-tab-active-text)",
+                } : {
+                  color: "var(--auth-tab-inactive-text)",
+                }}
               >
                 Login
               </button>
@@ -162,11 +165,13 @@ export default function HomePage() {
                   setMode("register");
                   setAuthError(null);
                 }}
-                className={`flex-1 rounded-xl px-4 py-2.5 text-sm font-semibold transition ${
-                  mode === "register"
-                    ? "bg-white text-slate-900"
-                    : "text-white/70 hover:text-white"
-                }`}
+                className="flex-1 rounded-xl px-4 py-2.5 text-sm font-semibold transition"
+                style={mode === "register" ? {
+                  background: "var(--auth-tab-active-bg)",
+                  color: "var(--auth-tab-active-text)",
+                } : {
+                  color: "var(--auth-tab-inactive-text)",
+                }}
               >
                 Register
               </button>
@@ -175,47 +180,62 @@ export default function HomePage() {
             <form onSubmit={handleAuthSubmit} className="space-y-4">
               {mode === "register" && (
                 <label className="block">
-                  <span className="mb-1.5 block text-sm font-medium text-white/80">
+                  <span className="mb-1.5 block text-sm font-medium" style={{ color: "var(--auth-label)" }}>
                     Username
                   </span>
                   <input
                     type="text"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none transition placeholder:text-white/35 focus:border-white/30"
+                    className="w-full rounded-2xl px-4 py-3 text-sm outline-none transition"
+                    style={{
+                      border: "1px solid var(--auth-input-border)",
+                      background: "var(--auth-input-bg)",
+                      color: "var(--auth-input-text)",
+                    }}
                     placeholder="your name"
                   />
                 </label>
               )}
 
               <label className="block">
-                <span className="mb-1.5 block text-sm font-medium text-white/80">
+                <span className="mb-1.5 block text-sm font-medium" style={{ color: "var(--auth-label)" }}>
                   Email
                 </span>
                 <input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none transition placeholder:text-white/35 focus:border-white/30"
+                  className="w-full rounded-2xl px-4 py-3 text-sm outline-none transition"
+                  style={{
+                    border: "1px solid var(--auth-input-border)",
+                    background: "var(--auth-input-bg)",
+                    color: "var(--auth-input-text)",
+                  }}
                   placeholder="you@example.com"
                 />
               </label>
 
               <label className="block">
-                <span className="mb-1.5 block text-sm font-medium text-white/80">
+                <span className="mb-1.5 block text-sm font-medium" style={{ color: "var(--auth-label)" }}>
                   Password
                 </span>
                 <input
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none transition placeholder:text-white/35 focus:border-white/30"
+                  className="w-full rounded-2xl px-4 py-3 text-sm outline-none transition"
+                  style={{
+                    border: "1px solid var(--auth-input-border)",
+                    background: "var(--auth-input-bg)",
+                    color: "var(--auth-input-text)",
+                  }}
                   placeholder="8+ chars, letters and numbers"
                 />
               </label>
 
               {mode === "register" && (
-                <p className="text-xs text-white/55">
+                <p className="text-xs" style={{ color: "var(--auth-muted)" }}>
                   パスワードは8文字以上で、英字と数字を両方含めてください。
                 </p>
               )}
@@ -228,7 +248,11 @@ export default function HomePage() {
 
               <button
                 type="submit"
-                className="w-full rounded-2xl bg-white px-4 py-3 text-sm font-bold text-slate-900 transition hover:opacity-90"
+                className="w-full rounded-2xl px-4 py-3 text-sm font-bold transition hover:opacity-90"
+                style={{
+                  background: "var(--auth-submit-bg)",
+                  color: "var(--auth-submit-text)",
+                }}
               >
                 {mode === "login" ? "ログイン" : "アカウント作成"}
               </button>

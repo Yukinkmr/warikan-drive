@@ -23,6 +23,31 @@
   --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.25);
   --radius: 12px;
   --radius-lg: 16px;
+  --auth-panel-bg: linear-gradient(
+    160deg,
+    color-mix(in srgb, var(--header-bg) 88%, transparent) 0%,
+    color-mix(in srgb, var(--card) 92%, transparent) 100%
+  );
+  --auth-panel-border: rgba(255, 255, 255, 0.1);
+  --auth-title: #ffffff;
+  --auth-body: rgba(255, 255, 255, 0.7);
+  --auth-label: rgba(255, 255, 255, 0.8);
+  --auth-muted: rgba(255, 255, 255, 0.55);
+  --auth-input-bg: rgba(255, 255, 255, 0.05);
+  --auth-input-border: rgba(255, 255, 255, 0.1);
+  --auth-input-text: #ffffff;
+  --auth-placeholder: rgba(255, 255, 255, 0.35);
+  --auth-focus: rgba(255, 255, 255, 0.3);
+  --auth-icon-bg: rgba(255, 255, 255, 0.1);
+  --auth-tab-bg: rgba(255, 255, 255, 0.05);
+  --auth-tab-border: rgba(255, 255, 255, 0.1);
+  --auth-tab-active-bg: #ffffff;
+  --auth-tab-active-text: #0f172a;
+  --auth-tab-inactive-text: rgba(255, 255, 255, 0.7);
+  --auth-tab-inactive-hover: #ffffff;
+  --auth-submit-bg: #ffffff;
+  --auth-submit-text: #0f172a;
+  --auth-shadow: 0 20px 80px rgba(0, 0, 0, 0.25);
 }
 
 [data-theme="light"] {
@@ -43,6 +68,27 @@
   --stat-bg: #f8fafc;
   --glow: 0 0 0 1px rgba(37, 99, 235, 0.2), 0 8px 32px -8px rgba(37, 99, 235, 0.15);
   --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.06);
+  --auth-panel-bg: linear-gradient(160deg, #ffffff 0%, #f8fafc 100%);
+  --auth-panel-border: var(--border);
+  --auth-title: var(--text);
+  --auth-body: var(--muted);
+  --auth-label: var(--label);
+  --auth-muted: var(--muted);
+  --auth-input-bg: var(--input-bg);
+  --auth-input-border: var(--border);
+  --auth-input-text: var(--text);
+  --auth-placeholder: var(--muted);
+  --auth-focus: var(--accent);
+  --auth-icon-bg: var(--accent-dim);
+  --auth-tab-bg: var(--surface);
+  --auth-tab-border: var(--border);
+  --auth-tab-active-bg: var(--accent);
+  --auth-tab-active-text: #ffffff;
+  --auth-tab-inactive-text: var(--label);
+  --auth-tab-inactive-hover: var(--text);
+  --auth-submit-bg: var(--accent);
+  --auth-submit-text: #ffffff;
+  --auth-shadow: 0 8px 32px rgba(15, 23, 42, 0.08);
 }
 
 body {
