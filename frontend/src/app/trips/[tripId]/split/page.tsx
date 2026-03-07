@@ -21,8 +21,8 @@ import type {
 import type { PaymentMethod } from "@/types";
 import { Card } from "@/components/ui/Card";
 import { Label } from "@/components/ui/Label";
-import { Pill } from "@/components/ui/Pill";
 import { Button } from "@/components/ui/Button";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { formatYen } from "@/lib/utils";
 
 export default function SplitPage() {
@@ -41,7 +41,13 @@ export default function SplitPage() {
   const [calcLoading, setCalcLoading] = useState(false);
   const [loading, setLoading] = useState(true);
 
+  const [fuelEff, setFuelEff] = useState(15);
+  const [gasPrice, setGasPrice] = useState(170);
+  const [driverWeight, setDriverWeight] = useState(0.7);
+  const [people, setPeople] = useState(4);
+
   const payment = (trip?.payment_method as PaymentMethod) || "ETC";
+  const paymentLabel = payment === "CASH" ? "現金" : "ETC";
 
   const loadTrip = useCallback(async () => {
     if (!tripId) return;
@@ -96,6 +102,13 @@ export default function SplitPage() {
   }, [loadTrip]);
 
   useEffect(() => {
+    if (!trip) return;
+    setFuelEff(Number(trip.fuel_efficiency) || 15);
+    setGasPrice(Number(trip.gas_price) || 170);
+    setDriverWeight(Number(trip.driver_weight) || 0.7);
+  }, [trip]);
+
+  useEffect(() => {
     if (!tripId) return;
     loadDaysAndRoutes();
     loadExtraCosts();
@@ -114,6 +127,10 @@ export default function SplitPage() {
       const result = await splitsApi.create(tripId, {
         route_ids: includedRoutes.map((r) => r.id),
         include_extra_cost_ids: extraCosts.map((c) => c.id),
+        fuel_efficiency: fuelEff,
+        gas_price: gasPrice,
+        driver_weight: driverWeight,
+        people,
       });
       setSplitResult(result);
     } catch {
@@ -121,7 +138,7 @@ export default function SplitPage() {
     } finally {
       setCalcLoading(false);
     }
-  }, [tripId, includedRoutes, extraCosts]);
+  }, [tripId, includedRoutes, extraCosts, fuelEff, gasPrice, driverWeight, people]);
 
   const addExtraCost = useCallback(
     async (label: string, amount: number) => {
@@ -155,47 +172,53 @@ export default function SplitPage() {
 
   if (loading || !trip) {
     return (
-      <div className="max-w-app mx-auto min-h-screen bg-bg text-text flex items-center justify-center p-4">
-        {loading ? (
-          <p className="text-muted">読み込み中…</p>
-        ) : (
-          <div>
-            <p className="text-muted">旅行が見つかりません</p>
-            <Link href="/" className="text-accent mt-2 inline-block">
-              トップへ
-            </Link>
-          </div>
-        )}
+      <div className="flex min-h-screen w-full items-center justify-center bg-bg p-4 text-text">
+        <div className="w-full max-w-app text-center md:max-w-app-md">
+          {loading ? (
+            <p className="text-muted">読み込み中…</p>
+          ) : (
+            <div>
+              <p className="text-muted">旅行が見つかりません</p>
+              <Link href="/" className="text-accent mt-2 inline-block hover:underline">
+                トップへ
+              </Link>
+            </div>
+          )}
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-app mx-auto min-h-screen bg-bg text-text">
-      <header
-        className="border-b border-border px-4 pt-5 pb-0"
-        style={{ background: "var(--header-bg)" }}
-      >
-        <div className="mb-4 flex items-center justify-between">
-          <Link
-            href={`/trips/${tripId}`}
-            className="text-white/80 text-sm"
-          >
-            ← ルート管理
-          </Link>
-        </div>
-        <div className="flex items-center gap-3 mb-1">
-          <span className="text-2xl">💰</span>
-          <div>
-            <h1 className="text-lg font-extrabold tracking-tight text-white">
-              {trip.name}
-            </h1>
-            <p className="text-[11px] text-white/65">割り勘計算</p>
+    <div className="min-h-screen w-full min-w-0 bg-bg text-text md:flex md:justify-center">
+      <div className="mx-auto w-full min-w-0 max-w-app md:max-w-app-md lg:max-w-app-lg xl:max-w-app-xl">
+        <header
+          className="border-b border-white/10 px-4 pt-5 pb-5 sm:px-5 sm:pt-6 md:px-6 md:pb-6 lg:px-8 lg:pt-7"
+          style={{ background: "var(--header-bg)" }}
+        >
+          <div className="flex items-center justify-between">
+            <Link
+              href={`/trips/${tripId}`}
+              className="text-xs font-medium text-white/80 transition-colors hover:text-white sm:text-sm"
+            >
+              ← ルート管理
+            </Link>
+            <ThemeToggle />
           </div>
-        </div>
-      </header>
+          <div className="mt-4 flex items-center gap-3 sm:mt-5">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/10 text-xl sm:h-11 sm:w-11 md:h-12 md:w-12 md:text-2xl">
+              💰
+            </div>
+            <div className="min-w-0 flex-1">
+              <h1 className="truncate text-xl font-bold tracking-tight text-white sm:text-2xl md:text-[1.65rem]">
+                {trip.name}
+              </h1>
+              <p className="mt-0.5 text-xs text-white/70 sm:text-sm">割り勘計算</p>
+            </div>
+          </div>
+        </header>
 
-      <main className="p-4">
+        <main className="p-4 pb-8 sm:p-5 md:p-6 md:pb-10 lg:p-8">
         <Card className="mb-3">
           <Label>計算対象ルート</Label>
           {includedRoutes.length === 0 ? (
@@ -227,29 +250,81 @@ export default function SplitPage() {
         </Card>
 
         <Card className="mb-3">
-          <Label>車・燃料設定（旅行設定を反映）</Label>
-          <div className="flex flex-col gap-3 text-[13px]">
+          <Label>車・燃料設定</Label>
+          <div className="flex flex-col gap-4 text-[13px]">
             <div>
               <div className="flex justify-between mb-1">
                 <span className="text-label">燃費</span>
                 <span className="font-semibold text-text">
-                  {trip.fuel_efficiency} km/L
+                  {fuelEff} km/L
                 </span>
               </div>
+              <input
+                type="range"
+                min={5}
+                max={30}
+                step={0.5}
+                value={fuelEff}
+                onChange={(e) => setFuelEff(parseFloat(e.target.value))}
+                className="w-full h-2 rounded-full appearance-none bg-inputBg border border-border accent-accent"
+              />
             </div>
             <div className="flex items-center gap-2">
               <span className="text-label whitespace-nowrap">
                 ガソリン単価
               </span>
-              <span className="font-semibold text-text">
-                {trip.gas_price} 円/L
-              </span>
+              <input
+                type="number"
+                min={1}
+                value={gasPrice}
+                onChange={(e) =>
+                  setGasPrice(parseInt(e.target.value, 10) || 0)
+                }
+                className="w-20 rounded-lg border border-border bg-inputBg px-2.5 py-1.5 text-sm text-text outline-none focus:border-accent"
+              />
+              <span className="text-muted">円/L</span>
             </div>
             <div>
-              <Label>運転手優遇</Label>
-              <span className="text-text font-semibold">
-                {Math.round(Number(trip.driver_weight) * 100)}%
-              </span>
+              <Label>人数（運転手含む）</Label>
+              <div className="flex gap-1.5 flex-wrap">
+                {[2, 3, 4, 5, 6].map((n) => (
+                  <button
+                    key={n}
+                    type="button"
+                    onClick={() => setPeople(n)}
+                    className={`rounded-full border px-4 py-1.5 text-sm font-semibold transition-colors ${
+                      people === n
+                        ? "border-accent bg-accent-dim text-accent"
+                        : "border-border bg-transparent text-muted hover:border-accent/50"
+                    }`}
+                  >
+                    {n}人
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <div className="flex justify-between mb-1">
+                <span className="text-label">運転手優遇</span>
+                <span className="font-semibold text-text">
+                  {Math.round(driverWeight * 100)}%
+                </span>
+              </div>
+              <input
+                type="range"
+                min={50}
+                max={100}
+                step={5}
+                value={Math.round(driverWeight * 100)}
+                onChange={(e) =>
+                  setDriverWeight(parseInt(e.target.value, 10) / 100)
+                }
+                className="w-full h-2 rounded-full appearance-none bg-inputBg border border-border accent-accent"
+              />
+              <div className="flex justify-between text-[11px] text-muted mt-0.5">
+                <span>優遇大</span>
+                <span>優遇なし</span>
+              </div>
             </div>
           </div>
         </Card>
@@ -290,7 +365,7 @@ export default function SplitPage() {
 
         {splitResult && (
           <Card
-            className="border-accent shadow-[var(--glow)]"
+            className="border-accent shadow-glow"
           >
             <div className="text-center mb-4">
               <div className="text-[11px] uppercase tracking-wider text-muted mb-1">
@@ -305,7 +380,7 @@ export default function SplitPage() {
             </div>
             <div className="border-t border-border pt-2.5 mb-3">
               {[
-                ["🛣 高速料金", splitResult.toll_yen, `(${payment})`],
+                ["🛣 高速料金", splitResult.toll_yen, `(${paymentLabel})`],
                 ["⛽ ガソリン代", splitResult.fuel_yen, ""],
                 ["🏨 追加費用", splitResult.extra_yen, ""],
               ].map(([label, value, sub]) => (
@@ -323,16 +398,16 @@ export default function SplitPage() {
                 </div>
               ))}
             </div>
-            <div className="flex gap-2 mb-3">
-              <div className="flex-1 rounded-xl border border-accent bg-statBg p-3 text-center shadow-[var(--glow)]">
+            <div className="flex gap-3 mb-3">
+              <div className="flex-1 rounded-card border border-accent bg-statBg p-3 text-center shadow-glow">
                 <div className="text-[11px] text-muted mb-0.5">🚗 運転手</div>
                 <div className="font-bold text-lg text-accent">
                   {formatYen(splitResult.driver_yen)}
                 </div>
               </div>
-              <div className="flex-1 rounded-xl border border-border bg-statBg p-3 text-center">
+              <div className="flex-1 rounded-card border border-border bg-statBg p-3 text-center">
                 <div className="text-[11px] text-muted mb-0.5">
-                  🧑‍🤝‍🧑 同乗者×1
+                  🧑‍🤝‍🧑 同乗者×{people - 1}
                 </div>
                 <div className="font-bold text-lg text-text">
                   {formatYen(splitResult.passenger_yen)}
@@ -341,7 +416,8 @@ export default function SplitPage() {
             </div>
           </Card>
         )}
-      </main>
+        </main>
+      </div>
     </div>
   );
 }

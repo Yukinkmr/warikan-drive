@@ -1,4 +1,6 @@
-const BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000/api/v1";
+export const API_BASE =
+  process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8001/api/v1";
+const BASE = API_BASE;
 
 async function fetchApi<T>(
   path: string,
@@ -12,7 +14,13 @@ async function fetchApi<T>(
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({ detail: res.statusText }));
-    throw new Error(Array.isArray(err.detail) ? err.detail[0]?.msg : err.detail || res.statusText);
+    const msg =
+      typeof err.detail === "string"
+        ? err.detail
+        : Array.isArray(err.detail)
+          ? err.detail[0]?.msg ?? res.statusText
+          : err.detail ?? res.statusText;
+    throw new Error(msg);
   }
   if (res.status === 204) return undefined as T;
   return res.json();
@@ -82,7 +90,17 @@ export const extraCostsApi = {
 
 // Splits
 export const splitsApi = {
-  create: (tripId: string, body: { route_ids: string[]; include_extra_cost_ids?: string[] }) =>
+  create: (
+    tripId: string,
+    body: {
+      route_ids: string[];
+      include_extra_cost_ids?: string[];
+      fuel_efficiency?: number;
+      gas_price?: number;
+      driver_weight?: number;
+      people?: number;
+    }
+  ) =>
     fetchApi<import("@/types").Split>(`/trips/${tripId}/splits`, { method: "POST", body: JSON.stringify(body) }),
   getLatest: (tripId: string) => fetchApi<import("@/types").Split>(`/trips/${tripId}/splits/latest`),
   get: (tripId: string, splitId: string) =>

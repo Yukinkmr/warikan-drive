@@ -1,0 +1,25 @@
+# 開発用: コードをマウントし、変更が即反映される（再ビルド不要）
+# docker compose up でこのファイルが自動的にマージされます
+
+services:
+  backend:
+    volumes:
+      - ./backend:/app
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+      args:
+        NEXT_PUBLIC_API_BASE_URL: /api/proxy
+    volumes:
+      - ./frontend:/app
+      - frontend_node_modules:/app/node_modules
+    environment:
+      NODE_ENV: development
+      NEXT_PUBLIC_API_BASE_URL: /api/proxy
+    command: ["sh", "-c", "npm install && npm run dev"]
+
+volumes:
+  frontend_node_modules:

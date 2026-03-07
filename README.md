@@ -126,6 +126,13 @@ cp .env.example .env
 docker compose up --build
 ```
 
+**開発時**は `docker-compose.override.yml` が自動で使われ、コードをマウントした状態で起動します。
+
+- **バックエンド**: ソースをマウントし `uvicorn --reload` で起動。Python を編集して保存すると自動で再起動します。
+- **フロントエンド**: ソースをマウントし `npm run dev` で起動。コードを保存するとブラウザが自動更新（ホットリロード）されます。
+
+コード変更のたびにイメージを再ビルドする必要はありません。初回のみ `--build` でビルドし、2回目以降は `docker compose up` だけでOKです。`package.json` や `requirements.txt` を変更したときだけ再ビルド（`docker compose up --build`）してください。
+
 初回はイメージのビルドと DB 初期化で数分かかることがあります。
 
 ### 4. ブラウザで開く

@@ -50,18 +50,18 @@ export function RouteCard({
 
   return (
     <div
-      className={`mb-2.5 rounded-[14px] border p-4 transition ${
-        selected ? "border-accent shadow-[var(--glow)]" : "border-border"
-      } bg-card`}
+      className={`rounded-card border bg-card p-4 shadow-card transition-all ${
+        selected ? "border-accent shadow-glow" : "border-border"
+      }`}
     >
-      <div className="mb-2.5 flex items-center justify-between">
+      <div className="mb-3 flex items-center justify-between">
         <div className="flex flex-wrap items-center gap-2">
-          <span className="rounded-lg bg-accentDim px-2.5 py-0.5 text-xs font-bold text-accent">
+          <span className="rounded-lg bg-accentDim px-2.5 py-1 text-xs font-semibold text-accent">
             ルート {idx + 1}
           </span>
           {selSeg && (
-            <span className="rounded-full bg-greenDim px-2 py-0.5 text-[11px] text-green">
-              ✓ {selSeg.distance_km}km · {formatYen(toll)}
+            <span className="rounded-full bg-greenDim px-2.5 py-1 text-[11px] font-medium text-green">
+              ✓ {selSeg.distance_km} km · {formatYen(toll)}
             </span>
           )}
         </div>
@@ -69,29 +69,30 @@ export function RouteCard({
           <button
             type="button"
             onClick={onRemove}
-            className="border-none bg-transparent text-red text-base cursor-pointer"
+            className="rounded p-1 text-muted transition-colors hover:bg-red/10 hover:text-red"
+            aria-label="ルートを削除"
           >
             ✕
           </button>
         )}
       </div>
-      <div className="mb-2 flex flex-col gap-1.5">
+      <div className="flex flex-col gap-3">
         <input
           type="text"
           placeholder="出発地（例：筑波大学）"
           value={route.origin}
           onChange={(e) => onUpdate(route.id, "origin", e.target.value)}
-          className="w-full rounded-[10px] border border-border bg-inputBg px-3 py-2 text-sm text-text outline-none focus:border-accent"
+          className="w-full rounded-[10px] border border-border bg-inputBg px-3 py-2.5 text-sm text-text transition-colors placeholder:text-muted focus:border-accent"
         />
         <input
           type="text"
           placeholder="目的地（例：東京駅）"
           value={route.destination}
           onChange={(e) => onUpdate(route.id, "destination", e.target.value)}
-          className="w-full rounded-[10px] border border-border bg-inputBg px-3 py-2 text-sm text-text outline-none focus:border-accent"
+          className="w-full rounded-[10px] border border-border bg-inputBg px-3 py-2.5 text-sm text-text transition-colors placeholder:text-muted focus:border-accent"
         />
-        <div className="flex items-center gap-2">
-          <span className="whitespace-nowrap text-xs text-label">⏰ 出発時刻</span>
+        <div className="flex items-center gap-3">
+          <span className="text-xs font-medium text-label">⏰ 出発時刻</span>
           <input
             type="time"
             value={departureTime}
@@ -102,11 +103,11 @@ export function RouteCard({
                 `${dayDate}T${e.target.value}:00+09:00`
               )
             }
-            className="w-[120px] rounded-[10px] border border-border bg-inputBg px-3 py-2 text-sm text-text outline-none"
+            className="w-[120px] rounded-[10px] border border-border bg-inputBg px-3 py-2.5 text-sm text-text transition-colors focus:border-accent"
           />
         </div>
       </div>
-      <div className="flex flex-wrap gap-1.5">
+      <div className="mt-3 flex flex-wrap gap-2">
         <Button
           onClick={onSearch}
           disabled={!route.origin || !route.destination || loading}
@@ -154,7 +155,7 @@ export function RouteCard({
           href={`https://www.google.com/maps/dir/${encodeURIComponent(route.origin)}/${encodeURIComponent(route.destination)}`}
           target="_blank"
           rel="noopener noreferrer"
-          className="mt-2 block text-center text-xs text-accent no-underline"
+          className="mt-3 block text-center text-xs font-medium text-accent no-underline transition-colors hover:underline"
         >
           🗺 Google Maps でナビ →
         </a>

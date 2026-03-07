@@ -10,7 +10,7 @@ export function Label({
   return (
     <div
       className={cn(
-        "text-[11px] font-bold uppercase tracking-wider text-muted mb-1.5",
+        "mb-1.5 block text-[11px] font-semibold uppercase tracking-widest text-muted",
         className
       )}
     >

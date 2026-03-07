@@ -36,21 +36,23 @@ export function DayBlock({
   onRemoveDay: () => void;
 }) {
   return (
-    <div className="mb-6">
-      <div className="mb-2.5 flex items-center justify-between">
+    <section className="mb-8">
+      <div className="mb-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <span className="text-lg">📅</span>
-          <span className="text-[15px] font-bold text-text">{day.date}</span>
-          <span className="text-xs text-muted">{routes.length}ルート</span>
+          <span className="text-lg" aria-hidden="true">📅</span>
+          <span className="text-base font-semibold text-text">{day.date}</span>
+          <span className="text-xs text-muted">{routes.length} ルート</span>
         </div>
         <button
           type="button"
           onClick={onRemoveDay}
-          className="border-none bg-transparent text-red cursor-pointer text-base"
+          className="rounded p-1.5 text-muted transition-colors hover:bg-red/10 hover:text-red"
+          aria-label="この日を削除"
         >
           🗑
         </button>
       </div>
+      <div className="space-y-3">
       {routes.map((r, i) => (
         <RouteCard
           key={r.id}
@@ -72,13 +74,15 @@ export function DayBlock({
           onToggle={() => onToggleInclude(r.id)}
         />
       ))}
+      </div>
       <button
         type="button"
         onClick={onAddRoute}
-        className="w-full rounded-[10px] border-2 border-dashed border-border bg-transparent py-2.5 font-semibold text-[13px] text-muted transition hover:border-accent hover:text-accent"
+        className="mt-3 flex w-full items-center justify-center gap-2 rounded-[10px] border-2 border-dashed border-border bg-transparent py-3 text-sm font-medium text-muted transition-colors hover:border-accent hover:text-accent hover:bg-accentDim/20"
       >
-        ＋ ルートを追加
+        <span>＋</span>
+        ルートを追加
       </button>
-    </div>
+    </section>
   );
 }

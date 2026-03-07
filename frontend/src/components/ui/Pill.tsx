@@ -18,10 +18,10 @@ export function Pill({
       type="button"
       onClick={onClick}
       className={cn(
-        "rounded-full border px-4 py-1.5 text-[13px] font-semibold transition",
+        "rounded-full border px-4 py-2 text-xs font-semibold tracking-wide transition-all duration-150",
         active
           ? "border-accent bg-accentDim text-accent"
-          : "border-border bg-transparent text-muted",
+          : "border-border bg-transparent text-muted hover:border-label hover:text-label",
         className
       )}
     >

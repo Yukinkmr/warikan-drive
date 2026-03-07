@@ -8,6 +8,9 @@ const config: Config = {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        sans: ["var(--font-inter)", "Inter", "ui-sans-serif", "system-ui", "sans-serif"],
+      },
       colors: {
         bg: "var(--bg)",
         surface: "var(--surface)",
@@ -26,6 +29,20 @@ const config: Config = {
       },
       maxWidth: {
         app: "440px",
+        "app-md": "672px",
+        "app-lg": "768px",
+        "app-xl": "896px",
+      },
+      screens: {
+        xs: "480px",
+      },
+      borderRadius: {
+        card: "var(--radius)",
+        "card-lg": "var(--radius-lg)",
+      },
+      boxShadow: {
+        glow: "var(--glow)",
+        card: "var(--shadow-card)",
       },
     },
   },

@@ -20,6 +20,7 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
+    restart: unless-stopped
     ports:
       - "8001:8000"
     environment:
@@ -35,10 +36,13 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      args:
+        # 同一オリジンに飛ばしてプロキシで中継（CORS 回避）
+        NEXT_PUBLIC_API_BASE_URL: /api/proxy
     ports:
       - "3000:3000"
     environment:
-      NEXT_PUBLIC_API_BASE_URL: http://localhost:8001/api/v1
+      BACKEND_URL: http://backend:8000
     env_file:
       - .env
     depends_on:

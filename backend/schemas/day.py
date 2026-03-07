@@ -1,4 +1,5 @@
 from datetime import date, datetime
+from typing import Optional
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict
@@ -9,7 +10,7 @@ class DayCreate(BaseModel):
 
 
 class DayUpdate(BaseModel):
-    date: date | None = None
+    date: Optional[date] = None
 
 
 class DayResponse(BaseModel):

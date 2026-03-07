@@ -1,0 +1,12 @@
+# 開発用: ビルドは一瞬。起動時に npm install → npm run dev（マウントでコード反映）
+FROM node:20-alpine
+
+WORKDIR /app
+
+ENV NEXT_TELEMETRY_DISABLED=1
+ENV PORT=3000
+ENV HOSTNAME=0.0.0.0
+
+# ソースは compose の volume でマウントするため、ここでは何もコピーしない
+# 起動時に npm install（node_modules は名前付きボリュームで永続化）→ dev
+CMD ["sh", "-c", "npm install && npm run dev"]

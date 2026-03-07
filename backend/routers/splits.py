@@ -57,11 +57,12 @@ def create_split(trip_id: UUID, body: SplitCreate, db: Session = Depends(get_db)
         ).all()
         extra_yen = sum(c.amount_yen for c in costs)
 
-    fuel_eff = float(trip.fuel_efficiency)
-    gas_price = trip.gas_price
-    driver_weight = float(trip.driver_weight)
+    fuel_eff = float(body.fuel_efficiency) if body.fuel_efficiency is not None else float(trip.fuel_efficiency)
+    gas_price = body.gas_price if body.gas_price is not None else trip.gas_price
+    driver_weight = float(body.driver_weight) if body.driver_weight is not None else float(trip.driver_weight)
     members = db.query(Member).filter(Member.trip_id == trip_id).all()
-    people = max(1, len(members)) if members else 1
+    people = body.people if body.people is not None else (max(1, len(members)) if members else 1)
+    people = max(1, min(people, 99))
 
     result = calculate_split(
         distance_km=distance_km,

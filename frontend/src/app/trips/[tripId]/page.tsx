@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { tripsApi, daysApi, routesApi } from "@/lib/api";
@@ -11,6 +11,7 @@ import { Card } from "@/components/ui/Card";
 import { Label } from "@/components/ui/Label";
 import { Pill } from "@/components/ui/Pill";
 import { Button } from "@/components/ui/Button";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { todayStr } from "@/lib/utils";
 
 export default function TripDetailPage() {
@@ -29,6 +30,10 @@ export default function TripDetailPage() {
   const [dateInput, setDateInput] = useState(todayStr());
   const [payment, setPayment] = useState<PaymentMethod>("ETC");
   const [loading, setLoading] = useState(true);
+  const updateRouteDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pendingUpdatesRef = useRef<
+    Map<string, { dayId: string; routeId: string; field: string; value: string }>
+  >(new Map());
 
   const loadTrip = useCallback(async () => {
     try {
@@ -81,27 +86,76 @@ export default function TripDetailPage() {
     loadDays();
   }, [tripId, trip?.id, loadDays]);
 
+  useEffect(() => {
+    return () => {
+      if (updateRouteDebounceRef.current) {
+        clearTimeout(updateRouteDebounceRef.current);
+      }
+    };
+  }, []);
+
   const updateRoute = useCallback(
-    async (routeId: string, field: string, value: string) => {
+    (routeId: string, field: string, value: string) => {
       const day = days.find((d) =>
         (routesByDayId[d.id] ?? []).some((r) => r.id === routeId)
       );
       if (!day) return;
-      const route = (routesByDayId[day.id] ?? []).find((r) => r.id === routeId);
-      if (!route) return;
-      const payload: Record<string, unknown> = { [field]: value };
-      if (field === "departure_time") payload.departure_time = value;
-      try {
-        const updated = await routesApi.update(day.id, routeId, payload as any);
-        setRoutesByDayId((prev) => ({
-          ...prev,
-          [day.id]: (prev[day.id] ?? []).map((r) =>
-            r.id === routeId ? updated : r
-          ),
-        }));
-      } catch {
-        // ignore
+
+      // 1. 楽観的更新: 入力内容を即座に表示（入力ずれ防止）
+      setRoutesByDayId((prev) => ({
+        ...prev,
+        [day.id]: (prev[day.id] ?? []).map((r) =>
+          r.id === routeId ? { ...r, [field]: value } : r
+        ),
+      }));
+
+      // 2. 出発時刻は即時 API 送信（選択なのでデバウンス不要）
+      if (field === "departure_time") {
+        const payload: Record<string, unknown> = { departure_time: value };
+        routesApi
+          .update(day.id, routeId, payload as any)
+          .then((updated) => {
+            setRoutesByDayId((prev) => ({
+              ...prev,
+              [day.id]: (prev[day.id] ?? []).map((r) =>
+                r.id === routeId ? updated : r
+              ),
+            }));
+          })
+          .catch(() => {});
+        return;
       }
+
+      // 3. 出発地・目的地はデバウンスしてから API 送信
+      const key = `${day.id}:${routeId}:${field}`;
+      pendingUpdatesRef.current.set(key, {
+        dayId: day.id,
+        routeId,
+        field,
+        value,
+      });
+      if (updateRouteDebounceRef.current) {
+        clearTimeout(updateRouteDebounceRef.current);
+      }
+      updateRouteDebounceRef.current = setTimeout(() => {
+        updateRouteDebounceRef.current = null;
+        const pending = new Map(pendingUpdatesRef.current);
+        pendingUpdatesRef.current.clear();
+        pending.forEach((p) => {
+          const payload: Record<string, unknown> = { [p.field]: p.value };
+          routesApi
+            .update(p.dayId, p.routeId, payload as any)
+            .then((updated) => {
+              setRoutesByDayId((prev) => ({
+                ...prev,
+                [p.dayId]: (prev[p.dayId] ?? []).map((r) =>
+                  r.id === p.routeId ? updated : r
+                ),
+              }));
+            })
+            .catch(() => {});
+        });
+      }, 400);
     },
     [days, routesByDayId]
   );
@@ -279,56 +333,70 @@ export default function TripDetailPage() {
 
   if (loading || !trip) {
     return (
-      <div className="max-w-app mx-auto min-h-screen bg-bg text-text flex items-center justify-center p-4">
-        {loading ? (
-          <p className="text-muted">読み込み中…</p>
-        ) : (
-          <div>
-            <p className="text-muted">旅行が見つかりません</p>
-            <Link href="/" className="text-accent mt-2 inline-block">
-              トップへ
-            </Link>
-          </div>
-        )}
+      <div className="flex min-h-screen w-full items-center justify-center bg-bg p-4 text-text">
+        <div className="w-full max-w-app text-center md:max-w-app-md">
+          {loading ? (
+            <p className="text-muted">読み込み中…</p>
+          ) : (
+            <div>
+              <p className="text-muted">旅行が見つかりません</p>
+              <Link href="/" className="text-accent mt-2 inline-block hover:underline">
+                トップへ
+              </Link>
+            </div>
+          )}
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-app mx-auto min-h-screen bg-bg text-text">
-      <header
-        className="border-b border-border px-4 pt-5 pb-0"
-        style={{ background: "var(--header-bg)" }}
-      >
-        <div className="mb-4 flex items-center justify-between">
-          <Link href="/" className="text-white/80 text-sm">
-            ← 一覧
-          </Link>
-        </div>
-        <div className="flex items-center gap-3 mb-1">
-          <span className="text-2xl">🚗</span>
-          <div>
-            <h1 className="text-lg font-extrabold tracking-tight text-white">
-              {trip.name}
-            </h1>
-            <p className="text-[11px] text-white/65">ルート管理</p>
+    <div className="min-h-screen w-full min-w-0 bg-bg text-text md:flex md:justify-center">
+      <div className="mx-auto w-full min-w-0 max-w-app md:max-w-app-md lg:max-w-app-lg xl:max-w-app-xl">
+        <header
+          className="border-b border-white/10 px-4 pt-5 pb-0 sm:px-5 sm:pt-6 md:px-6 lg:px-8 lg:pt-7"
+          style={{ background: "var(--header-bg)" }}
+        >
+          <div className="flex items-center justify-between">
+            <Link
+              href="/"
+              className="text-xs font-medium text-white/80 transition-colors hover:text-white sm:text-sm"
+            >
+              ← 一覧
+            </Link>
+            <ThemeToggle />
           </div>
-        </div>
-        <div className="mt-4 flex">
-          <span className="flex-1 py-2.5 text-center text-[13px] font-bold border-b-2 border-white text-white">
-            🗺 ルート管理
-          </span>
-          <Link
-            href={`/trips/${tripId}/split`}
-            className="flex-1 py-2.5 text-center text-[13px] font-normal border-b-2 border-transparent text-white/55 hover:text-white transition"
-          >
-            💰 割り勘計算
-          </Link>
-        </div>
-      </header>
+          <div className="mt-4 flex items-center gap-3 sm:mt-5">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/10 text-xl sm:h-11 sm:w-11 md:h-12 md:w-12 md:text-2xl">
+              🚗
+            </div>
+            <div className="min-w-0 flex-1">
+              <h1 className="truncate text-xl font-bold tracking-tight text-white sm:text-2xl md:text-[1.65rem]">
+                {trip.name}
+              </h1>
+              <p className="mt-0.5 text-xs text-white/70 sm:text-sm">ルート管理</p>
+            </div>
+          </div>
+          <nav className="mt-4 flex sm:mt-5" role="tablist">
+            <span
+              className="flex-1 border-b-2 border-white py-3 text-center text-sm font-semibold text-white sm:py-3.5"
+              role="tab"
+              aria-selected="true"
+            >
+              🗺 ルート管理
+            </span>
+            <Link
+              href={`/trips/${tripId}/split`}
+              className="flex-1 border-b-2 border-transparent py-3 text-center text-sm font-medium text-white/60 transition-colors hover:text-white sm:py-3.5"
+              role="tab"
+            >
+              💰 割り勘計算
+            </Link>
+          </nav>
+        </header>
 
-      <main className="p-4">
-        <Card className="mb-4 flex items-center gap-2.5">
+        <main className="p-4 pb-8 sm:p-5 md:p-6 md:pb-10 lg:p-8">
+        <Card className="mb-4 flex items-center gap-3">
           <span className="text-[13px] font-semibold text-label">
             高速料金
           </span>
@@ -353,7 +421,7 @@ export default function TripDetailPage() {
         </Card>
 
         {days.length === 0 && (
-          <div className="py-10 text-center text-muted">
+          <div className="py-12 text-center text-sm text-muted">
             下から日付を追加してください
           </div>
         )}
@@ -377,33 +445,34 @@ export default function TripDetailPage() {
           />
         ))}
 
-        <Card className="mb-4">
+        <Card className="mb-5">
           <Label>日付を追加</Label>
-          <div className="flex gap-2">
+          <div className="mt-2 flex gap-3">
             <input
               type="date"
               value={dateInput}
               onChange={(e) => setDateInput(e.target.value)}
-              className="flex-1 rounded-[10px] border border-border bg-inputBg px-3 py-2 text-sm text-text outline-none"
+              className="flex-1 rounded-[10px] border border-border bg-inputBg px-3 py-2.5 text-sm text-text transition-colors focus:border-accent"
             />
-            <Button onClick={addDay} variant="primary" className="py-2">
+            <Button onClick={addDay} variant="primary" className="shrink-0">
               追加
             </Button>
           </div>
         </Card>
 
-        <Link href={`/trips/${tripId}/split`}>
+        <Link href={`/trips/${tripId}/split`} className="block sm:max-w-md">
           <Button
             disabled={selCount === 0}
             variant="primary"
-            className="w-full py-3.5 text-[15px]"
+            className="w-full py-3.5 text-sm"
           >
             {selCount > 0
               ? `${selCount}ルートで割り勘計算 →`
-              : "経路を選択・「割り勘に含む」を設定してください"}
+              : "経路を選択し「割り勘に含む」を設定してください"}
           </Button>
         </Link>
-      </main>
+        </main>
+      </div>
     </div>
   );
 }

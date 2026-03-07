@@ -20,7 +20,11 @@ class RouteSegment(Base):
     summary = Column(String(200), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
-    route = relationship("Route", back_populates="segments")
+    route = relationship(
+        "Route",
+        back_populates="segments",
+        foreign_keys=[route_id],
+    )
 
 
 class Route(Base):

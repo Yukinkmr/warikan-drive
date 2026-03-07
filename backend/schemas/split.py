@@ -7,6 +7,10 @@ from pydantic import BaseModel, ConfigDict
 class SplitCreate(BaseModel):
     route_ids: list[UUID]
     include_extra_cost_ids: list[UUID] = []
+    fuel_efficiency: float | None = None
+    gas_price: int | None = None
+    driver_weight: float | None = None
+    people: int | None = None
 
 
 class SplitResponse(BaseModel):
