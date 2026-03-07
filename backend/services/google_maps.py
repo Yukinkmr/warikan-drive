@@ -85,6 +85,8 @@ def _request_routes(
     destination: str,
     departure_rfc: str,
     time_type: str,
+    use_highways: bool,
+    use_tolls: bool,
     toll_passes: list[str] | None = None,
 ) -> dict[str, Any]:
     body: dict[str, Any] = {
@@ -96,6 +98,8 @@ def _request_routes(
         "languageCode": "ja",
         "regionCode": "JP",
         "routeModifiers": {
+            "avoidHighways": not use_highways,
+            "avoidTolls": not use_tolls,
             "vehicleInfo": {"emissionType": "GASOLINE"},
         },
     }
@@ -142,6 +146,8 @@ def search_route_segments(
     departure_time: str,
     payment_method: str,
     time_type: str = "DEPARTURE",
+    use_highways: bool = True,
+    use_tolls: bool = True,
 ) -> list[dict[str, Any]]:
     """
     経路候補を取得。各候補は summary, distance_km, duration_min, toll_etc_yen, toll_cash_yen を持つ。
@@ -159,6 +165,8 @@ def search_route_segments(
             destination=destination,
             departure_rfc=departure_rfc,
             time_type=time_type,
+            use_highways=use_highways,
+            use_tolls=use_tolls,
             toll_passes=None,
         )
         # ETC 料金（JP_ETC を指定）
@@ -168,6 +176,8 @@ def search_route_segments(
             destination=destination,
             departure_rfc=departure_rfc,
             time_type=time_type,
+            use_highways=use_highways,
+            use_tolls=use_tolls,
             toll_passes=["JP_ETC"],
         )
     except Exception:

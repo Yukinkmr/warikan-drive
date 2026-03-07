@@ -54,6 +54,8 @@ export interface Route {
   dest_lng: number | null;
   departure_time: string | null;
   time_type: "DEPARTURE" | "ARRIVAL" | null;
+  use_highways: boolean;
+  use_tolls: boolean;
   selected_segment_id: string | null;
   distance_km: number | null;
   toll_yen: number;

@@ -39,7 +39,7 @@ export default function TripDetailPage({ params }: PageProps) {
   const swipeStartX = useRef<number | null>(null);
   const updateRouteDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pendingUpdatesRef = useRef<
-    Map<string, { dayId: string; routeId: string; field: string; value: string }>
+    Map<string, { dayId: string; routeId: string; field: string; value: string | boolean }>
   >(new Map());
 
   const mergeRouteKeepingLocalInputs = useCallback(
@@ -120,13 +120,13 @@ export default function TripDetailPage({ params }: PageProps) {
   }, []);
 
   const updateRoute = useCallback(
-    (routeId: string, field: string, value: string) => {
+    (routeId: string, field: string, value: string | boolean) => {
       const day = days.find((d) =>
         (routesByDayId[d.id] ?? []).some((r) => r.id === routeId)
       );
       if (!day) return;
 
-      if (field === "day_date") {
+      if (field === "day_date" && typeof value === "string") {
         const currentRoutes = routesByDayId[day.id] ?? [];
         setDays((prev) =>
           prev.map((d) => (d.id === day.id ? { ...d, date: value } : d))
@@ -171,11 +171,20 @@ export default function TripDetailPage({ params }: PageProps) {
       }));
 
       // 2. 出発/到着時刻設定は即時 API 送信（選択なのでデバウンス不要）
-      if (field === "departure_time" || field === "time_type") {
+      if (
+        field === "departure_time" ||
+        field === "time_type" ||
+        field === "use_highways" ||
+        field === "use_tolls"
+      ) {
         const payload: Record<string, unknown> =
           field === "departure_time"
             ? { departure_time: value }
-            : { time_type: value };
+            : field === "time_type"
+              ? { time_type: value }
+              : field === "use_highways"
+                ? { use_highways: value }
+                : { use_tolls: value };
         routesApi
           .update(day.id, routeId, payload as any)
           .then((updated) => {
@@ -492,29 +501,7 @@ export default function TripDetailPage({ params }: PageProps) {
           <SplitView tripId={tripId} />
         ) : (
           <>
-        <Card className="mb-4 flex items-center gap-3">
-          <span className="text-[13px] font-semibold text-label">
-            高速料金
-          </span>
-          <Pill
-            active={payment === "ETC"}
-            onClick={() => {
-              setPayment("ETC");
-              tripsApi.update(tripId, { payment_method: "ETC" }).then(loadTrip);
-            }}
-          >
-            ETC
-          </Pill>
-          <Pill
-            active={payment === "CASH"}
-            onClick={() => {
-              setPayment("CASH");
-              tripsApi.update(tripId, { payment_method: "CASH" }).then(loadTrip);
-            }}
-          >
-            現金
-          </Pill>
-        </Card>
+        
 
         {routeCards.length === 0 && (
           <div className="py-12 text-center text-sm text-muted">
@@ -541,6 +528,10 @@ export default function TripDetailPage({ params }: PageProps) {
               onSelectSeg={(segId: string) => selectSeg(route.id, segId)}
               selected={includeRouteIds.includes(route.id)}
               onToggle={() => toggleInclude(route.id)}
+              onPaymentChange={(nextPayment: PaymentMethod) => {
+                setPayment(nextPayment);
+                tripsApi.update(tripId, { payment_method: nextPayment }).then(loadTrip);
+              }}
             />
           ))}
         </div>

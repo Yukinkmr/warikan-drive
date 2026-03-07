@@ -22,6 +22,7 @@ export function RouteCard({
   onSelectSeg,
   selected,
   onToggle,
+  onPaymentChange,
 }: {
   route: Route;
   idx: number;
@@ -29,13 +30,14 @@ export function RouteCard({
   segments: RouteSegment[];
   loading: boolean;
   dayDate: string;
-  onUpdate: (routeId: string, field: string, value: string) => void;
+  onUpdate: (routeId: string, field: string, value: string | boolean) => void;
   onUpdateDate: (routeId: string, value: string) => void;
   onRemove: (() => void) | null;
   onSearch: () => void | Promise<void>;
   onSelectSeg: (segmentId: string) => void;
   selected: boolean;
   onToggle: () => void;
+  onPaymentChange: (payment: PaymentMethod) => void;
 }) {
   const [open, setOpen] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
@@ -51,6 +53,7 @@ export function RouteCard({
       ? new Date(route.departure_time).toTimeString().slice(0, 5)
       : "09:00";
   const timeType: RouteTimeType = route.time_type ?? "DEPARTURE";
+  
 
   async function handleSearch() {
     await Promise.resolve(onSearch());
@@ -132,19 +135,72 @@ export function RouteCard({
         />
       </div>
       
-      <div className="flex flex-col gap-3">
+      <div className="mb-3 flex flex-col gap-3">
+        {/* <span className="text-sm font-medium text-label">出発地</span> */}
         <PlaceInput
           placeholder="出発地（例：筑波大学）"
           value={route.origin}
           onChange={(val) => onUpdate(route.id, "origin", val)}
           className="w-full rounded-2xl border border-border bg-inputBg px-4 py-3 text-sm text-text outline-none transition placeholder:text-muted focus:border-accent"
         />
+        {/* <span className="text-sm font-medium text-label">目的地</span> */}
         <PlaceInput
           placeholder="目的地（例：東京駅）"
           value={route.destination}
           onChange={(val) => onUpdate(route.id, "destination", val)}
           className="w-full rounded-2xl border border-border bg-inputBg px-4 py-3 text-sm text-text outline-none transition placeholder:text-muted focus:border-accent"
         />
+      </div>
+      <span className="text-sm font-medium text-label">オプション</span>
+      <div className="mb-3 rounded-2xl border border-border bg-surface p-3">
+        <div className="mb-3 flex flex-col gap-2">
+          <label className="flex items-center gap-3 text-sm text-text">
+            <input
+              type="checkbox"
+              checked={route.use_highways === false}
+              onChange={(e) => onUpdate(route.id, "use_highways", e.target.checked === false)}
+              className="h-4 w-4 accent-accent"
+            />
+            高速道路を利用しない
+          </label>
+          <label className="flex items-center gap-3 text-sm text-text">
+            <input
+              type="checkbox"
+              checked={route.use_tolls === false}
+              onChange={(e) => onUpdate(route.id, "use_tolls", e.target.checked === false)}
+              className="h-4 w-4 accent-accent"
+            />
+            有料道路を利用しない
+          </label>
+        </div>
+        <div className="mb-3 h-px bg-border" />
+        <div className="flex items-center gap-3">
+          <span className="text-sm font-medium text-label">高速料金</span>
+          <div className="inline-flex rounded-2xl border border-border bg-inputBg p-1 text-xs">
+            <button
+              type="button"
+              onClick={() => onPaymentChange("ETC")}
+              className={`rounded-xl px-2.5 py-1 transition ${
+                payment === "ETC"
+                  ? "bg-accent text-white"
+                  : "text-label hover:bg-surface"
+              }`}
+            >
+              ETC
+            </button>
+            <button
+              type="button"
+              onClick={() => onPaymentChange("CASH")}
+              className={`rounded-xl px-2.5 py-1 transition ${
+                payment === "CASH"
+                  ? "bg-accent text-white"
+                  : "text-label hover:bg-surface"
+              }`}
+            >
+              現金
+            </button>
+          </div>
+        </div>
       </div>
       <div className="mt-3 flex flex-wrap gap-2">
         <Button

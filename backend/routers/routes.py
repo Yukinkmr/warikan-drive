@@ -36,6 +36,8 @@ def create_route(
         destination=body.destination,
         departure_time=dep,
         time_type=body.time_type,
+        use_highways=body.use_highways,
+        use_tolls=body.use_tolls,
     )
     db.add(route)
     db.commit()
@@ -105,6 +107,8 @@ def search_route(
         departure_time=body.departure_time,
         payment_method=body.payment_method,
         time_type=body.time_type,
+        use_highways=route.use_highways,
+        use_tolls=route.use_tolls,
     )
     # 既存の segment を削除して新規保存
     route.selected_segment_id = None

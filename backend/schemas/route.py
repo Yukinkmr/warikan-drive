@@ -23,6 +23,8 @@ class RouteCreate(BaseModel):
     destination: str
     departure_time: datetime | None = None
     time_type: Literal["DEPARTURE", "ARRIVAL"] = "DEPARTURE"
+    use_highways: bool = True
+    use_tolls: bool = True
 
 
 class RouteUpdate(BaseModel):
@@ -31,6 +33,8 @@ class RouteUpdate(BaseModel):
     destination: str | None = None
     departure_time: datetime | None = None
     time_type: Literal["DEPARTURE", "ARRIVAL"] | None = None
+    use_highways: bool | None = None
+    use_tolls: bool | None = None
     is_include_split: bool | None = None
     day_id: UUID | None = None
 
@@ -49,6 +53,8 @@ class RouteResponse(BaseModel):
     dest_lng: float | None
     departure_time: datetime | None
     time_type: Literal["DEPARTURE", "ARRIVAL"]
+    use_highways: bool
+    use_tolls: bool
     selected_segment_id: UUID | None
     distance_km: float | None
     toll_yen: int
