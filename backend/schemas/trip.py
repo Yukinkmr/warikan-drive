@@ -10,7 +10,6 @@ class TripCreate(BaseModel):
     fuel_efficiency: float
     gas_price: int
     driver_weight: float
-    owner_id: UUID | None = None
 
 
 class TripUpdate(BaseModel):

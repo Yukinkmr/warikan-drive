@@ -4,8 +4,7 @@ import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { tripsApi, daysApi, routesApi, API_BASE } from "@/lib/api";
-
-const DEFAULT_OWNER_ID = "00000000-0000-0000-0000-000000000001";
+import { useAuth } from "@/contexts/AuthContext";
 
 function todayStr() {
   const d = new Date();
@@ -14,10 +13,16 @@ function todayStr() {
 
 export default function NewTripPage() {
   const router = useRouter();
+  const { user, loading } = useAuth();
   const [error, setError] = useState<string | null>(null);
   const started = useRef(false);
 
   useEffect(() => {
+    if (loading) return;
+    if (!user) {
+      router.replace("/");
+      return;
+    }
     if (started.current) return;
     started.current = true;
 
@@ -29,7 +34,6 @@ export default function NewTripPage() {
           fuel_efficiency: 15,
           gas_price: 170,
           driver_weight: 0.5,
-          owner_id: DEFAULT_OWNER_ID,
         });
         const day = await daysApi.create(trip.id, { date: todayStr() });
         await routesApi.create(day.id, { origin: "", destination: "" });
@@ -41,7 +45,7 @@ export default function NewTripPage() {
         setError(msg);
       }
     })();
-  }, [router]);
+  }, [loading, router, user]);
 
   const [checkResult, setCheckResult] = useState<string | null>(null);
   const checkConnection = async () => {
@@ -63,6 +67,20 @@ export default function NewTripPage() {
       );
     }
   };
+
+  if (loading) {
+    return (
+      <div className="flex min-h-screen w-full flex-col items-center justify-center gap-6 bg-bg p-4 text-text">
+        <div className="w-full max-w-app text-center md:max-w-app-md">
+          <p className="text-muted">読み込み中…</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return null;
+  }
 
   if (error) {
     return (

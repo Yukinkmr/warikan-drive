@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from database import engine, Base
-from routers import trips, days, routes, extra_costs, splits, payments, members
+from routers import auth, trips, days, routes, extra_costs, splits, payments, members
 
 
 @asynccontextmanager
@@ -46,6 +46,7 @@ def unhandled_exception_handler(request: Request, exc: Exception):
     )
 
 
+app.include_router(auth.router, prefix="/api/v1")
 app.include_router(trips.router, prefix="/api/v1")
 app.include_router(days.router, prefix="/api/v1")
 app.include_router(routes.router, prefix="/api/v1")

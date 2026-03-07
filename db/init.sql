@@ -9,6 +9,8 @@ CREATE TYPE payment_status_enum AS ENUM ('pending', 'paid');
 CREATE TABLE users (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name VARCHAR(50) NOT NULL,
+  email VARCHAR(255) UNIQUE,
+  password_hash VARCHAR(255),
   paypay_id VARCHAR(50),
   created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
@@ -120,7 +122,3 @@ CREATE INDEX idx_route_segments_route ON route_segments(route_id);
 CREATE INDEX idx_extra_costs_trip ON extra_costs(trip_id);
 CREATE INDEX idx_splits_trip ON splits(trip_id);
 CREATE INDEX idx_payments_split ON payments(split_id);
-
--- 開発用デフォルトユーザー（MVPで owner_id に使用）
-INSERT INTO users (id, name) VALUES ('00000000-0000-0000-0000-000000000001', 'デフォルト')
-ON CONFLICT (id) DO NOTHING;
