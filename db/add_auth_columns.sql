@@ -24,7 +24,18 @@ BEGIN
   END IF;
 END $$;
 
--- 3. email のユニーク制約（email 列が存在し、制約がまだない場合のみ追加）
+-- 3. google_sub 列（なければ追加）
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public' AND table_name = 'users' AND column_name = 'google_sub'
+  ) THEN
+    ALTER TABLE public.users ADD COLUMN google_sub VARCHAR(255);
+  END IF;
+END $$;
+
+-- 4. email のユニーク制約（email 列が存在し、制約がまだない場合のみ追加）
 DO $$
 BEGIN
   IF EXISTS (
@@ -35,6 +46,22 @@ BEGIN
     WHERE conname = 'uq_users_email' AND conrelid = 'public.users'::regclass
   ) THEN
     ALTER TABLE public.users ADD CONSTRAINT uq_users_email UNIQUE (email);
+  END IF;
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+END $$;
+
+-- 5. google_sub のユニーク制約（google_sub 列が存在し、制約がまだない場合のみ追加）
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public' AND table_name = 'users' AND column_name = 'google_sub'
+  ) AND NOT EXISTS (
+    SELECT 1 FROM pg_constraint
+    WHERE conname = 'uq_users_google_sub' AND conrelid = 'public.users'::regclass
+  ) THEN
+    ALTER TABLE public.users ADD CONSTRAINT uq_users_google_sub UNIQUE (google_sub);
   END IF;
 EXCEPTION
   WHEN duplicate_object THEN NULL;

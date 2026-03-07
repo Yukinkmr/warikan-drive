@@ -24,6 +24,11 @@ class LoginRequest(BaseModel):
     password: str
 
 
+class GoogleLoginRequest(BaseModel):
+    code: str
+    redirect_uri: str
+
+
 class AuthResponse(BaseModel):
     token: str
     user: AuthUserResponse

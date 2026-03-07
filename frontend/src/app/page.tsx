@@ -9,6 +9,8 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { useAuth } from "@/contexts/AuthContext";
 
 const PASSWORD_RULE = /^(?=.*[A-Za-z])(?=.*\d).{8,}$/;
+const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "";
+const GOOGLE_STATE_STORAGE_KEY = "warikan-drive-google-state";
 
 function todayStr() {
   const d = new Date();
@@ -99,6 +101,25 @@ export default function HomePage() {
     } finally {
       setCreating(false);
     }
+  };
+
+  const startGoogleLogin = () => {
+    if (!GOOGLE_CLIENT_ID || typeof window === "undefined") {
+      setAuthError("Googleログインが設定されていません。");
+      return;
+    }
+    const state = crypto.randomUUID();
+    sessionStorage.setItem(GOOGLE_STATE_STORAGE_KEY, state);
+    const redirectUri = `${window.location.origin}/callback`;
+    const params = new URLSearchParams({
+      client_id: GOOGLE_CLIENT_ID,
+      redirect_uri: redirectUri,
+      response_type: "code",
+      scope: "openid email profile",
+      state,
+      prompt: "select_account",
+    });
+    window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`;
   };
 
   if (authLoading) {
@@ -255,6 +276,27 @@ export default function HomePage() {
                 }}
               >
                 {mode === "login" ? "ログイン" : "アカウント作成"}
+              </button>
+
+              <div className="flex items-center gap-3 pt-1">
+                <div className="h-px flex-1 bg-border/70" />
+                <span className="text-xs uppercase tracking-[0.18em]" style={{ color: "var(--auth-muted)" }}>
+                  or
+                </span>
+                <div className="h-px flex-1 bg-border/70" />
+              </div>
+
+              <button
+                type="button"
+                onClick={startGoogleLogin}
+                className="w-full rounded-2xl border px-4 py-3 text-sm font-semibold transition hover:opacity-90"
+                style={{
+                  borderColor: "var(--auth-input-border)",
+                  background: "var(--auth-input-bg)",
+                  color: "var(--auth-input-text)",
+                }}
+              >
+                Google で続行
               </button>
             </form>
           </div>

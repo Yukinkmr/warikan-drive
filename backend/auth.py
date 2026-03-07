@@ -7,6 +7,7 @@ import re
 import time
 from uuid import UUID
 
+import httpx
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
@@ -16,6 +17,8 @@ from models import Day, Route, Split, Trip, User
 
 AUTH_SECRET = os.getenv("AUTH_SECRET", "warikan-drive-dev-secret")
 AUTH_TOKEN_TTL_SECONDS = int(os.getenv("AUTH_TOKEN_TTL_SECONDS", str(60 * 60 * 24 * 30)))
+GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID", "")
+GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET", "")
 PASSWORD_PATTERN = re.compile(r"^(?=.*[A-Za-z])(?=.*\d).{8,}$")
 EMAIL_PATTERN = re.compile(r"^[^\s@]+@[^\s@]+\.[^\s@]+$")
 PASSWORD_ITERATIONS = 100_000
@@ -46,6 +49,86 @@ def validate_email(email: str) -> None:
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail="Please enter a valid email address",
         )
+
+
+def exchange_google_code(code: str, redirect_uri: str) -> dict:
+    if not GOOGLE_CLIENT_ID or not GOOGLE_CLIENT_SECRET:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Google login is not configured",
+        )
+    if not code or not redirect_uri:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Google code and redirect URI are required",
+        )
+
+    try:
+        with httpx.Client(timeout=10.0) as client:
+            token_res = client.post(
+                "https://oauth2.googleapis.com/token",
+                data={
+                    "code": code,
+                    "client_id": GOOGLE_CLIENT_ID,
+                    "client_secret": GOOGLE_CLIENT_SECRET,
+                    "redirect_uri": redirect_uri,
+                    "grant_type": "authorization_code",
+                },
+            )
+    except httpx.HTTPError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="Unable to reach Google OAuth",
+        ) from exc
+
+    if token_res.status_code != 200:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Google authorization failed",
+        )
+
+    token_payload = token_res.json()
+    access_token = token_payload.get("access_token")
+    if not access_token:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Google access token is missing",
+        )
+
+    try:
+        with httpx.Client(timeout=10.0) as client:
+            userinfo_res = client.get(
+                "https://openidconnect.googleapis.com/v1/userinfo",
+                headers={"Authorization": f"Bearer {access_token}"},
+            )
+    except httpx.HTTPError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="Unable to load Google user profile",
+        ) from exc
+
+    if userinfo_res.status_code != 200:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Unable to verify Google user profile",
+        )
+
+    payload = userinfo_res.json()
+    email = str(payload.get("email") or "").strip().lower()
+    validate_email(email)
+    if payload.get("email_verified") not in {True, "true"}:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Google account email is not verified",
+        )
+    sub = str(payload.get("sub") or "").strip()
+    if not sub:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Google account identifier is missing",
+        )
+    name = str(payload.get("name") or email.split("@")[0]).strip() or "Google User"
+    return {"sub": sub, "email": email, "name": name}
 
 
 def hash_password(password: str) -> str:

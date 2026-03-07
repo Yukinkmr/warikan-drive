@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 
 from auth import (
     create_access_token,
+    exchange_google_code,
     get_current_user,
     hash_password,
     validate_email,
@@ -12,7 +13,13 @@ from auth import (
 )
 from database import get_db
 from models import User
-from schemas.auth import AuthResponse, AuthUserResponse, LoginRequest, RegisterRequest
+from schemas.auth import (
+    AuthResponse,
+    AuthUserResponse,
+    GoogleLoginRequest,
+    LoginRequest,
+    RegisterRequest,
+)
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -51,6 +58,31 @@ def login(body: LoginRequest, db: Session = Depends(get_db)):
     if not user or not verify_password(body.password, user.password_hash):
         raise HTTPException(status_code=401, detail="Invalid email or password")
 
+    return AuthResponse(token=create_access_token(user.id), user=AuthUserResponse.model_validate(user))
+
+
+@router.post("/google", response_model=AuthResponse)
+def google_login(body: GoogleLoginRequest, db: Session = Depends(get_db)):
+    google_user = exchange_google_code(body.code, body.redirect_uri)
+    user = db.query(User).filter(User.google_sub == google_user["sub"]).first()
+
+    if not user:
+        user = db.query(User).filter(func.lower(User.email) == google_user["email"]).first()
+        if user:
+            if user.google_sub and user.google_sub != google_user["sub"]:
+                raise HTTPException(status_code=409, detail="This email is already linked to another Google account")
+            user.google_sub = google_user["sub"]
+        else:
+            user = User(
+                name=google_user["name"],
+                email=google_user["email"],
+                google_sub=google_user["sub"],
+                password_hash=None,
+            )
+            db.add(user)
+
+    db.commit()
+    db.refresh(user)
     return AuthResponse(token=create_access_token(user.id), user=AuthUserResponse.model_validate(user))
 
 

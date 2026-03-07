@@ -10,6 +10,7 @@ CREATE TABLE users (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name VARCHAR(50) NOT NULL,
   email VARCHAR(255) UNIQUE,
+  google_sub VARCHAR(255) UNIQUE,
   password_hash VARCHAR(255),
   paypay_id VARCHAR(50),
   created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
