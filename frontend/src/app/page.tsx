@@ -212,34 +212,28 @@ export default function HomePage() {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-bg px-4 py-6 text-text">
+      <div className="auth-screen min-h-screen bg-bg px-4 py-6 text-text">
         <div className="mx-auto w-full max-w-app md:max-w-app-md">
           <div className="mb-8 flex items-center justify-end">
-            <ThemeToggle />
+            <div className="flex items-center scale-75 origin-center sm:scale-90">
+              <ThemeToggle />
+            </div>
           </div>
 
           <div
-            className="rounded-[28px] px-5 py-6 sm:px-6"
-            style={{
-              background: "var(--auth-panel-bg)",
-              border: "1px solid var(--auth-panel-border)",
-              boxShadow: "var(--auth-shadow)",
-            }}
+            className="rounded-[28px] border border-border bg-card px-5 py-6 shadow-card sm:px-6"
           >
             <div className="mb-6 flex items-start justify-between gap-4">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.2em]" style={{ color: "var(--auth-muted)" }}>
                   Warikan Drive
                 </p>
+                <p className="mt-1 text-sm" style={{ color: "var(--auth-body)" }}>
+                  素早く割り勘、旅終わりのドライバーさんへ
+                </p>
                 <h1 className="mt-2 text-3xl font-bold tracking-tight" style={{ color: "var(--auth-title)" }}>
                   ログイン / 新規登録
                 </h1>
-                <p className="mt-2 text-sm" style={{ color: "var(--auth-body)" }}>
-                  ログインすると、自分のプラン履歴と割り勘データだけを表示します。
-                </p>
-              </div>
-              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl text-3xl" style={{ background: "var(--auth-icon-bg)" }}>
-                🚗
               </div>
             </div>
 
