@@ -58,6 +58,10 @@ async function proxy(
     if (body) {
       fetchHeaders["Content-Type"] = "application/json";
     }
+    const authHeader = req.headers.get("authorization");
+    if (authHeader) {
+      fetchHeaders["Authorization"] = authHeader;
+    }
 
     const res = await fetch(backendUrl, {
       method: req.method,
