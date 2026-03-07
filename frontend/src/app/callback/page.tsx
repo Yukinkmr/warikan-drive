@@ -27,15 +27,15 @@ function CallbackContent() {
         : null;
 
     if (authError) {
-      setError(`Google login was cancelled: ${authError}`);
+      queueMicrotask(() => setError(`Google login was cancelled: ${authError}`));
       return;
     }
     if (!code) {
-      setError("Google authorization code is missing.");
+      queueMicrotask(() => setError("Google authorization code is missing."));
       return;
     }
     if (!returnedState || !expectedState || returnedState !== expectedState) {
-      setError("Google login state mismatch.");
+      queueMicrotask(() => setError("Google login state mismatch."));
       return;
     }
 
