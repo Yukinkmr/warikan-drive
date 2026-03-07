@@ -37,8 +37,8 @@
 | データベース | PostgreSQL 16 |
 | 外部API | Google Maps Routes API |
 | 環境 | Docker / docker-compose（開発時は override でホットリロード） |
-| フロントデプロイ | Vercel（想定） |
-| バックデプロイ | Render（想定） |
+| フロントデプロイ | Vercel |
+| バックデプロイ | Vercel（Serverless Functions + Mangum） |
 
 ---
 
@@ -186,6 +186,54 @@ docker compose --profile local-db up --build
 ```
 
 db / backend / frontend の 3 サービスが起動し、データはローカルボリュームに保存されます。
+
+---
+
+## Vercel デプロイ（フル構成）
+
+フロント・バックともに Vercel、DB は Supabase の構成でデプロイできます。**フロントとバックは別々の Vercel プロジェクト**として登録します。
+
+### 前提
+
+- GitHub にリポジトリを push 済み
+- Supabase でプロジェクト作成済み・`db/init.sql` 実行済み・接続文字列（**Pooler の URI**）を取得済み
+
+### 1. Vercel でバックエンドをデプロイ
+
+1. [Vercel](https://vercel.com) にログイン → **Add New** → **Project**
+2. 対象リポジトリを選択
+3. **Root Directory** を **`backend`** に設定（Edit）
+4. **Environment Variables** に追加:
+   - `DATABASE_URL` … Supabase の接続文字列（Session または Transaction の URI）
+   - `GOOGLE_MAPS_API_KEY` … 任意
+5. **Deploy** する
+6. デプロイ後の URL を控える（例: `https://warikan-backend-xxx.vercel.app`）
+
+### 2. Vercel でフロントエンドをデプロイ
+
+1. **Add New** → **Project** で同じリポジトリを再度選択（2つ目のプロジェクト）
+2. **Root Directory** を **`frontend`** に設定
+3. **Environment Variables** に追加:
+   - `NEXT_PUBLIC_API_BASE_URL` … バックエンドの URL + `/api/v1`（例: `https://warikan-backend-xxx.vercel.app/api/v1`）
+4. **Deploy** する
+
+### 3. 動作確認
+
+フロントの Vercel URL を開き、旅行作成や割り勘計算ができることを確認します。Supabase の Table Editor でデータが入っているかも確認できます。
+
+### 環境変数一覧
+
+| 変数 | 設定する場所 | 説明 |
+|------|--------------|------|
+| `DATABASE_URL` | Vercel バックエンド | Supabase の接続文字列（Pooler 推奨） |
+| `GOOGLE_MAPS_API_KEY` | Vercel バックエンド | 経路検索用（任意） |
+| `NEXT_PUBLIC_API_BASE_URL` | Vercel フロント | バックエンドの URL + `/api/v1` |
+
+### 注意点
+
+- **Vercel Hobby**: 非商用利用。Serverless のコールドスタートで初回 1〜3 秒遅くなることがあります。
+- **Supabase 無料枠**: 7 日間アクセスがないと DB がスリープします。デモ前に Supabase ダッシュボードや API にアクセスして起こしておくと安全です。
+- push を main にマージすると、Vercel が自動で再デプロイします。CI（Lint 等）は `.github/workflows/ci.yml` で実行されます。
 
 ---
 
