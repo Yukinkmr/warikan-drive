@@ -103,6 +103,8 @@ export default function TripDetailPage({ params }: PageProps) {
   useEffect(() => {
     if (!user || !tripId || !trip) return;
     loadDays();
+    // trip?.id で「どの旅行か」を追跡しており、trip オブジェクト全体は意図的に省略
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, tripId, trip?.id, loadDays]);
 
   useEffect(() => {

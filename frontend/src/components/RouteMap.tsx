@@ -53,17 +53,16 @@ export function RouteMap({
   const mapRef = useRef<google.maps.Map | null>(null);
   const polylinesRef = useRef<Map<string, google.maps.Polyline>>(new Map());
   const markersRef = useRef<google.maps.Marker[]>([]);
-  const [loadError, setLoadError] = useState<string | null>(null);
+  const noMapsKeyMessage =
+    "Google Maps API キーが設定されていません。.env に NEXT_PUBLIC_GOOGLE_MAPS_KEY を設定し、Maps JavaScript API を有効にしてください。";
+  const [loadError, setLoadError] = useState<string | null>(() =>
+    hasMapsKey() ? null : noMapsKeyMessage
+  );
   const [isLoaded, setIsLoaded] = useState(false);
 
   // --- Maps JS API ロード ---
   useEffect(() => {
-    if (!hasMapsKey()) {
-      setLoadError(
-        "Google Maps API キーが設定されていません。.env に NEXT_PUBLIC_GOOGLE_MAPS_KEY を設定し、Maps JavaScript API を有効にしてください。"
-      );
-      return;
-    }
+    if (!hasMapsKey()) return;
     let cancelled = false;
     ensureApiOptions();
     Promise.all([importLibrary("maps"), importLibrary("geometry")])
@@ -147,10 +146,12 @@ export function RouteMap({
 
   // --- アンマウント時クリーンアップ ---
   useEffect(() => {
+    const polylines = polylinesRef.current;
+    const markers = markersRef.current;
     return () => {
-      polylinesRef.current.forEach((p) => p.setMap(null));
-      polylinesRef.current.clear();
-      markersRef.current.forEach((m) => m.setMap(null));
+      polylines.forEach((p) => p.setMap(null));
+      polylines.clear();
+      markers.forEach((m) => m.setMap(null));
       markersRef.current = [];
     };
   }, []);
