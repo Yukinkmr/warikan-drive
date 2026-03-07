@@ -225,9 +225,13 @@ export default function HomePage() {
           >
             <div className="mb-6 flex items-start justify-between gap-4">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.2em]" style={{ color: "var(--auth-muted)" }}>
+                <Link
+                  href="/lp"
+                  className="block text-xs font-semibold uppercase tracking-[0.2em] transition hover:opacity-80"
+                  style={{ color: "var(--auth-muted)" }}
+                >
                   Warikan Drive
-                </p>
+                </Link>
                 <p className="mt-1 text-sm" style={{ color: "var(--auth-body)" }}>
                   素早く割り勘、旅終わりのドライバーさんへ
                 </p>
