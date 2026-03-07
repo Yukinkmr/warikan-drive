@@ -35,6 +35,7 @@ def create_route(
         origin=body.origin,
         destination=body.destination,
         departure_time=dep,
+        time_type=body.time_type,
     )
     db.add(route)
     db.commit()

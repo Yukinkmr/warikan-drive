@@ -21,6 +21,7 @@ class RouteCreate(BaseModel):
     origin: str
     destination: str
     departure_time: datetime | None = None
+    time_type: str | None = None  # 'DEPARTURE' | 'ARRIVAL'
 
 
 class RouteUpdate(BaseModel):
@@ -28,6 +29,7 @@ class RouteUpdate(BaseModel):
     origin: str | None = None
     destination: str | None = None
     departure_time: datetime | None = None
+    time_type: str | None = None
     is_include_split: bool | None = None
 
 
@@ -44,6 +46,7 @@ class RouteResponse(BaseModel):
     dest_lat: float | None
     dest_lng: float | None
     departure_time: datetime | None
+    time_type: str | None = None  # 'DEPARTURE' | 'ARRIVAL'
     selected_segment_id: UUID | None
     distance_km: float | None
     toll_yen: int

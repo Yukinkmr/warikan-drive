@@ -55,6 +55,7 @@ CREATE TABLE routes (
   dest_lat DECIMAL(9,6),
   dest_lng DECIMAL(9,6),
   departure_time TIMESTAMP WITH TIME ZONE,
+  time_type VARCHAR(20) CHECK (time_type IS NULL OR time_type IN ('DEPARTURE', 'ARRIVAL')),
   selected_segment_id UUID,
   distance_km DECIMAL(7,2),
   toll_yen INT DEFAULT 0,
