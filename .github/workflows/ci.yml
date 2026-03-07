@@ -23,7 +23,13 @@ jobs:
         with:
           python-version: "3.11"
       - run: pip install -r requirements.txt
-      - run: alembic upgrade head
+      - name: Run migrations
+        run: |
+          if [ -z "$DATABASE_URL" ]; then
+            echo "::warning::DATABASE_URL is not set. Add it in Settings → Secrets to run migrations."
+            exit 0
+          fi
+          alembic upgrade head
 
   backend:
     name: Backend
@@ -50,8 +56,6 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "20"
-          cache: "npm"
-          cache-dependency-path: package-lock.json
       - run: npm ci
       - run: npm run lint
       - run: npm run build
