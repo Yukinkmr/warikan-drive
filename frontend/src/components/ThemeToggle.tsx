@@ -1,18 +1,26 @@
 "use client";
 
+import { useId } from "react";
 import { useTheme } from "@/contexts/ThemeContext";
 
 export function ThemeToggle() {
+  const id = useId();
   const { dark, toggle } = useTheme();
 
   return (
-    <button
-      type="button"
-      onClick={toggle}
-      className="flex items-center gap-2 rounded-full border border-border bg-card/80 px-3 py-2 text-xs font-medium text-label transition-colors hover:border-label hover:text-text hover:bg-card"
-    >
-      <span className="text-sm leading-none">{dark ? "☀️" : "🌙"}</span>
-      <span>{dark ? "ライト" : "ダーク"}</span>
-    </button>
+    <div className="theme-switch">
+      <input
+        type="checkbox"
+        id={id}
+        name="theme-switch"
+        className="theme-switch__input"
+        checked={dark}
+        onChange={toggle}
+        aria-label="テーマを切り替え"
+      />
+      <label htmlFor={id} className="theme-switch__label">
+        <span>テーマ</span>
+      </label>
+    </div>
   );
 }

@@ -143,6 +143,16 @@ export default function HomePage() {
     }
   };
 
+  const handleDeleteTrip = async (tripId: string, tripName: string) => {
+    if (!window.confirm(`「${tripName}」を削除しますか？`)) return;
+    try {
+      await tripsApi.delete(tripId);
+      setTrips((prev) => prev.filter((t) => t.id !== tripId));
+    } catch {
+      // 失敗時は何もしない
+    }
+  };
+
   if (authLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-bg p-4 text-text">
@@ -322,8 +332,7 @@ export default function HomePage() {
               </h1>
               <p className="mt-1 text-sm text-white/70">{user.email}</p>
             </div>
-            <div className="flex items-center gap-2">
-              <ThemeToggle />
+            <div className="flex flex-col items-end gap-2">
               <button
                 type="button"
                 onClick={logout}
@@ -331,6 +340,7 @@ export default function HomePage() {
               >
                 Logout
               </button>
+              <ThemeToggle />
             </div>
           </div>
         </header>
@@ -463,28 +473,44 @@ export default function HomePage() {
                       </div>
                     ) : (
                       <>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setEditingTripId(trip.id);
-                            setEditingName(trip.name);
-                          }}
-                          className="block w-full truncate text-left text-base font-semibold text-text hover:text-accent"
-                        >
+                        <p className="truncate text-base font-semibold text-text">
                           {trip.name}
-                        </button>
+                        </p>
                         <p className="mt-1 text-sm text-muted">
                           作成日 {new Date(trip.created_at).toLocaleDateString("ja-JP")}
                         </p>
                       </>
                     )}
                   </div>
-                  <Link
-                    href={`/trips/${trip.id}`}
-                    className="shrink-0 text-sm font-medium text-accent hover:underline"
-                  >
-                    開く →
-                  </Link>
+                  <div className="flex shrink-0 items-center gap-2">
+                    {editingTripId !== trip.id && (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setEditingTripId(trip.id);
+                            setEditingName(trip.name);
+                          }}
+                          className="rounded-2xl border border-border bg-surface px-3 py-2 text-xs font-medium text-label transition hover:bg-border/50"
+                        >
+                          名前の変更
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteTrip(trip.id, trip.name)}
+                          className="rounded-2xl border border-red/30 bg-red/10 px-3 py-2 text-xs font-medium text-red transition hover:bg-red/20"
+                        >
+                          削除
+                        </button>
+                      </>
+                    )}
+                    <Link
+                      href={`/trips/${trip.id}`}
+                      className="rounded-2xl bg-accent px-3 py-2 text-xs font-semibold text-white transition hover:opacity-90"
+                    >
+                      開く →
+                    </Link>
+                  </div>
                 </div>
               ))}
             </div>
