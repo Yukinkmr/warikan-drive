@@ -146,5 +146,10 @@ export const authApi = {
       method: "POST",
       body: JSON.stringify(body),
     }),
+  googleLogin: (body: { code: string; redirect_uri: string }) =>
+    fetchApi<import("@/types").AuthResponse>("/auth/google", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
   me: () => fetchApi<import("@/types").AuthUser>("/auth/me"),
 };

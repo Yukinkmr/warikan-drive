@@ -8,6 +8,7 @@ type AuthContextValue = {
   user: AuthUser | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
+  loginWithGoogleCode: (code: string, redirectUri: string) => Promise<void>;
   register: (name: string, email: string, password: string) => Promise<void>;
   logout: () => void;
 };
@@ -16,6 +17,7 @@ const AuthContext = createContext<AuthContextValue>({
   user: null,
   loading: true,
   login: async () => {},
+  loginWithGoogleCode: async () => {},
   register: async () => {},
   logout: () => {},
 });
@@ -51,6 +53,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(session.user);
   };
 
+  const loginWithGoogleCode = async (code: string, redirectUri: string) => {
+    const session = await authApi.googleLogin({ code, redirect_uri: redirectUri });
+    storeSession(session);
+    setUser(session.user);
+  };
+
   const register = async (name: string, email: string, password: string) => {
     const session = await authApi.register({ name, email, password });
     storeSession(session);
@@ -63,7 +71,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, loginWithGoogleCode, register, logout }}>
       {children}
     </AuthContext.Provider>
   );
