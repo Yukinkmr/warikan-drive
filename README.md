@@ -115,18 +115,20 @@ cd warikan-drive
 cp .env.example .env
 ```
 
-必要に応じて `.env` を編集します。
+**.env を編集します。**
 
+- **DATABASE_URL（必須）**  
+  Supabase でプロジェクトを作成し、ダッシュボードの **Connect** から接続文字列（URI）をコピーして `DATABASE_URL` に貼り付けます。初回のみ Supabase の **SQL Editor** で `db/init.sql` を実行してテーブルを作成してください。
 - **Google Maps 経路・料金を使う場合**  
-  `GOOGLE_MAPS_API_KEY` に API キーを設定してください。  
-  未設定の場合はモックの経路・料金で動作します。
-- その他の項目はそのままで Docker 利用時は問題ありません。
+  `GOOGLE_MAPS_API_KEY` に API キーを設定してください。未設定の場合はモックで動作します。
 
 ### 3. Docker で起動
 
 ```bash
 docker compose up --build
 ```
+
+**デフォルトでは DB コンテナは起動しません。** バックエンドとフロントエンドだけが立ち、`.env` の `DATABASE_URL`（Supabase）に接続します。
 
 **開発時**は `docker-compose.override.yml` が自動で使われ、コードをマウントした状態で起動します。
 
@@ -135,7 +137,7 @@ docker compose up --build
 
 コード変更のたびにイメージを再ビルドする必要はありません。初回のみ `--build` でビルドし、2回目以降は `docker compose up` だけでOKです。`package.json` や `requirements.txt` を変更したときだけ再ビルド（`docker compose up --build`）してください。
 
-初回はイメージのビルドと DB 初期化に少し時間がかかります。開発時はフロントエンドの初回起動でコンテナ内の `npm install` が走るため、1〜2 分待つことがあります。ログに `Ready in` や `Local: http://localhost:3000` が出れば準備完了です。
+初回はイメージのビルドに少し時間がかかります。開発時はフロントエンドの初回起動でコンテナ内の `npm install` が走るため、1〜2 分待つことがあります。ログに `Ready in` や `Local: http://localhost:3000` が出れば準備完了です。
 
 ### 4. ブラウザで開く
 
@@ -167,11 +169,23 @@ docker compose up --build
 docker compose down
 ```
 
-DB データを消す場合（ボリュームごと削除）:
+ローカル DB を使っている場合にボリュームごと削除する場合:
 
 ```bash
-docker compose down -v
+docker compose --profile local-db down -v
 ```
+
+---
+
+## ローカル PostgreSQL を使う場合
+
+Supabase ではなく、PC 上の PostgreSQL コンテナで動かす場合は、`.env` の `DATABASE_URL` を削除するか `postgresql://postgres:postgres@db:5432/warikan_drive` にし、**`local-db` プロファイル**を付けて起動します。
+
+```bash
+docker compose --profile local-db up --build
+```
+
+db / backend / frontend の 3 サービスが起動し、データはローカルボリュームに保存されます。
 
 ---
 
@@ -185,6 +199,6 @@ docker compose down -v
 - **Node.js バージョン**  
   フロントエンド（Next.js 16）は Node.js 20 以上を想定しています。Docker では node:20-alpine を使用しています。
 - **バックエンド単体**  
-  DB だけ Docker で動かし、バックエンドを手元で実行する場合は、`.env` の `DATABASE_URL` を `postgresql://postgres:postgres@localhost:5432/warikan_drive` にし、`docker compose up db -d` のあと `cd backend && uvicorn main:app --reload` で起動できます。API は http://localhost:8000 でアクセスできます（compose では 8001 にマッピング）。
+  ローカル DB を Docker で動かし、バックエンドだけ手元で実行する場合は、`.env` の `DATABASE_URL` を `postgresql://postgres:postgres@localhost:5432/warikan_drive` にし、`docker compose --profile local-db up db -d` のあと `cd backend && uvicorn main:app --reload` で起動できます。API は http://localhost:8000 でアクセスできます（compose では 8001 にマッピング）。
 - **フロントエンド単体**  
   `cd frontend && npm install && npm run dev` で http://localhost:3000 で起動できます。バックエンドは別途起動し、`NEXT_PUBLIC_API_BASE_URL` をバックエンドの URL（例: `http://localhost:8001/api/v1`）に合わせてください。

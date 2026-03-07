@@ -1,6 +1,11 @@
+# 通常: .env に DATABASE_URL（Supabase の接続文字列）を設定し、docker compose up で backend + frontend のみ起動。
+# ローカル PostgreSQL を使う場合: docker compose --profile local-db up で db も起動。
+
 services:
   db:
     image: postgres:16-alpine
+    profiles:
+      - local-db
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
@@ -24,13 +29,13 @@ services:
     ports:
       - "8001:8000"
     environment:
-      DATABASE_URL: postgresql://postgres:postgres@db:5432/warikan_drive
+      # .env の DATABASE_URL を使用（Supabase 推奨）。未設定で local-db 時はローカル db に接続
+      DATABASE_URL: ${DATABASE_URL:-postgresql://postgres:postgres@db:5432/warikan_drive}
       GOOGLE_MAPS_API_KEY: ${GOOGLE_MAPS_API_KEY:-}
     env_file:
       - .env
-    depends_on:
-      db:
-        condition: service_healthy
+    # db は profiles: [local-db] のため、depends_on にするとプロファイルなしで down がエラーになるので省略。
+    # ローカル DB 利用時は --profile local-db で db を先に起動し、数秒待ってから backend が接続する。
 
   frontend:
     build:
