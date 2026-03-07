@@ -5,7 +5,8 @@ import type { Route, RouteSegment } from "@/types";
 import type { PaymentMethod } from "@/types";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
-import { SegmentSelector } from "@/components/SegmentSelector";
+import { RouteMap } from "@/components/RouteMap";
+import { PlaceInput } from "@/components/PlaceInput";
 import { formatYen } from "@/lib/utils";
 
 export function RouteCard({
@@ -77,18 +78,16 @@ export function RouteCard({
         )}
       </div>
       <div className="flex flex-col gap-3">
-        <input
-          type="text"
+        <PlaceInput
           placeholder="出発地（例：筑波大学）"
           value={route.origin}
-          onChange={(e) => onUpdate(route.id, "origin", e.target.value)}
+          onChange={(val) => onUpdate(route.id, "origin", val)}
           className="w-full rounded-[10px] border border-border bg-inputBg px-3 py-2.5 text-sm text-text transition-colors placeholder:text-muted focus:border-accent"
         />
-        <input
-          type="text"
+        <PlaceInput
           placeholder="目的地（例：東京駅）"
           value={route.destination}
-          onChange={(e) => onUpdate(route.id, "destination", e.target.value)}
+          onChange={(val) => onUpdate(route.id, "destination", val)}
           className="w-full rounded-[10px] border border-border bg-inputBg px-3 py-2.5 text-sm text-text transition-colors placeholder:text-muted focus:border-accent"
         />
         <div className="flex items-center gap-3">
@@ -120,44 +119,47 @@ export function RouteCard({
               ? "🔄 再検索"
               : "🔍 経路を検索"}
         </Button>
-        {segments.length > 0 && (
-          <Button
-            onClick={() => setOpen((o) => !o)}
-            variant="ghost"
-            className="flex-1 text-xs"
-          >
-            {open ? "▲ 閉じる" : "▼ 経路を選ぶ"}
-          </Button>
-        )}
-        {selSeg && (
-          <Button
-            onClick={onToggle}
-            variant="ghost"
-            className={`flex-1 text-xs ${selected ? "border-accent text-accent" : ""}`}
-          >
-            {selected ? "✓ 含む" : "割り勘に含む"}
-          </Button>
-        )}
+        <Button
+        onClick={() => setOpen((o) => !o)}
+        variant="ghost"
+        className="flex-1 text-xs"
+        disabled={segments.length === 0}
+        >
+        {open ? "▲ 閉じる" : "▼ 経路を選ぶ"}
+        </Button>
+        <Button
+        onClick={onToggle}
+        variant="ghost"
+        className={`flex-1 text-xs ${selected ? "border-accent text-accent" : ""}`}
+        disabled={segments.length === 0}
+        >
+        {selected ? "✓ 含む" : "割り勘に含む"}
+        </Button>
       </div>
       {open && segments.length > 0 && (
-        <SegmentSelector
+        <RouteMap
+          origin={route.origin}
+          originLat={route.origin_lat}
+          originLng={route.origin_lng}
+          destination={route.destination}
+          destLat={route.dest_lat}
+          destLng={route.dest_lng}
           segments={segments}
           selectedId={route.selected_segment_id}
           payment={payment}
           onSelect={(id) => {
             onSelectSeg(id);
-            setOpen(false);
           }}
         />
       )}
       {selSeg && (
         <a
-          href={`https://www.google.com/maps/dir/${encodeURIComponent(route.origin)}/${encodeURIComponent(route.destination)}`}
+          href={`https://www.google.com/maps/dir/${route.origin}/${route.destination}`}
           target="_blank"
           rel="noopener noreferrer"
           className="mt-3 block text-center text-xs font-medium text-accent no-underline transition-colors hover:underline"
         >
-          🗺 Google Maps でナビ →
+          🗺 Google Maps に移動
         </a>
       )}
     </div>

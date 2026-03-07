@@ -8,6 +8,7 @@ class RouteSegmentResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: UUID
+    polyline: str | None = None
     summary: str | None
     distance_km: float
     duration_min: int
