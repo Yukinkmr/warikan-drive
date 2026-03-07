@@ -74,7 +74,9 @@ export default function SplitPage({ params }: PageProps) {
             >
               ← ルート管理
             </Link>
-            <ThemeToggle />
+            <div className="flex items-center scale-75 origin-center sm:scale-90">
+              <ThemeToggle />
+            </div>
           </div>
           <div className="mt-4 flex items-center gap-3 sm:mt-5">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-white/10 text-xl sm:h-11 sm:w-11 md:h-12 md:w-12 md:text-2xl">
