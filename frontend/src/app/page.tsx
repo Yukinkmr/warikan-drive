@@ -45,6 +45,8 @@ export default function HomePage() {
   const [popupSaving, setPopupSaving] = useState(false);
   const [renamingTripId, setRenamingTripId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState("");
+  const [deleteConfirmingTripId, setDeleteConfirmingTripId] = useState<string | null>(null);
+  const [deletingTripId, setDeletingTripId] = useState<string | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [filterKeyword, setFilterKeyword] = useState("");
   const [filterDate, setFilterDate] = useState("");
@@ -174,15 +176,17 @@ export default function HomePage() {
     }
   };
 
-  const handleDeleteTrip = async (tripId: string, tripName: string) => {
-    if (!window.confirm(`「${tripName}」を削除しますか？`)) return;
+  const handleConfirmDeleteTrip = async (tripId: string) => {
+    setDeletingTripId(tripId);
     try {
       await tripsApi.delete(tripId);
       setTrips((prev) => prev.filter((t) => t.id !== tripId));
-      if (editingTripId === tripId) setEditingTripId(null);
-      if (renamingTripId === tripId) setRenamingTripId(null);
+      setDeleteConfirmingTripId(null);
+      if (editingTripId === tripId) setPopupClosing(true);
     } catch {
       // 失敗時は何もしない
+    } finally {
+      setDeletingTripId(null);
     }
   };
 
@@ -411,14 +415,16 @@ export default function HomePage() {
           className="shrink-0 border-b border-white/10 px-4 pt-5 pb-5 sm:px-5 sm:pt-6 md:px-6 lg:px-8 lg:pt-7"
           style={{ background: "var(--header-bg)" }}
         >
-          <div className="flex items-start justify-between gap-4">
-            <div>
+          <div className="flex items-center justify-between gap-4">
+            <div className="min-w-0 flex-1">
               <h1 className="text-lg font-bold tracking-tight text-white sm:text-xl">
-                {user.name} のプラン一覧
+                <span className="whitespace-nowrap">{user.name}</span>
+                {" "}
+                <span className="whitespace-nowrap">のプラン一覧</span>
               </h1>
             </div>
-            <div className="flex flex-col items-end gap-1.5 sm:gap-2">
-              <div className="scale-75 origin-top-right sm:scale-90">
+            <div className="flex shrink-0 items-center gap-5 sm:gap-6">
+              <div className="flex items-center scale-75 origin-center sm:scale-90">
                 <ThemeToggle />
               </div>
               <button
@@ -529,12 +535,12 @@ export default function HomePage() {
                 disabled={creating}
                 className="mb-4 shrink-0 whitespace-nowrap rounded-2xl bg-accent px-4 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                {creating ? "作成中…" : "＋ 新しいプラン"}
+                {creating ? "作成中…" : "＋ 新しいドライブプラン"}
               </button>
               <div className="rounded-2xl border border-border bg-card px-4 py-8 text-center">
                 <p className="text-sm text-muted">まだプランがありません。</p>
                 <p className="mt-1 text-sm text-muted">
-                  「＋ 新しいプラン」から自分用の履歴を作成できます。
+                  「新しいドライブプラン」から自分用の履歴を作成できます。
                 </p>
               </div>
             </>
@@ -579,7 +585,7 @@ export default function HomePage() {
                 disabled={creating}
                 className="mb-4 shrink-0 whitespace-nowrap rounded-2xl bg-accent px-4 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                {creating ? "作成中…" : "＋ 新しいプラン"}
+                {creating ? "作成中…" : "＋ 新しいドライブプラン"}
               </button>
               <div className="min-h-0 flex-1">
               {filteredTrips.length === 0 ? (
@@ -637,9 +643,10 @@ export default function HomePage() {
           )}
 
           {(editingTripId || popupClosing) && (() => {
-            const tripId = editingTripId!;
+            const tripId = editingTripId ?? "";
             const tripToEdit = trips.find((t) => t.id === tripId);
-            if (!tripToEdit) return null;
+            // 削除完了後は tripToEdit が無いが、閉じアニメーションのためポップアップは残す
+            if (!tripToEdit && !popupClosing) return null;
             const isRenaming = renamingTripId === tripId;
             const closePopup = () => {
               if (!popupClosing) setPopupClosing(true);
@@ -651,8 +658,26 @@ export default function HomePage() {
                 setPopupSaving(false);
                 setRenamingTripId(null);
                 setEditingName("");
+                setDeleteConfirmingTripId(null);
+                setDeletingTripId(null);
               }
             };
+            // 削除完了後は閉じアニメーションのみ表示（中身は不要）
+            if (popupClosing && !tripToEdit) {
+              return (
+                <div
+                  className="edit-popup-overlay edit-popup-closing fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+                  role="dialog"
+                  aria-modal="true"
+                  aria-label="閉じる"
+                >
+                  <div
+                    className="edit-popup-panel edit-popup-closing w-full max-w-sm rounded-2xl border border-border bg-card p-5 shadow-lg"
+                    onAnimationEnd={handlePopupAnimationEnd}
+                  />
+                </div>
+              );
+            }
             return (
               <div
                 className={`edit-popup-overlay fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 ${popupClosing ? "edit-popup-closing" : ""}`}
@@ -709,6 +734,41 @@ export default function HomePage() {
                         </button>
                       </div>
                     </>
+                  ) : deletingTripId === tripId ? (
+                    <div className="flex flex-col items-center gap-4 py-2">
+                      <span
+                        className="h-8 w-8 shrink-0 animate-spin rounded-full border-2 border-accent/30 border-t-accent"
+                        aria-hidden
+                      />
+                      <p className="text-sm font-medium text-label">削除中…</p>
+                    </div>
+                  ) : deleteConfirmingTripId === tripId ? (
+                    <>
+                      <h3
+                        id="edit-trip-modal-title"
+                        className="text-sm font-semibold text-label"
+                      >
+                        本当に削除しますか？
+                      </h3>
+                      <div className="mt-4 flex flex-col gap-2">
+                        <button
+                          type="button"
+                          onClick={() => handleConfirmDeleteTrip(tripId)}
+                          disabled={deletingTripId === tripId}
+                          className="flex items-center justify-center gap-2 rounded-2xl bg-red px-4 py-3 text-sm font-medium text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-70"
+                        >
+                          はい
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setDeleteConfirmingTripId(null)}
+                          disabled={deletingTripId === tripId}
+                          className="rounded-2xl border border-border bg-surface px-4 py-3 text-sm font-medium text-muted transition hover:bg-border/50 disabled:cursor-not-allowed disabled:opacity-70"
+                        >
+                          いいえ
+                        </button>
+                      </div>
+                    </>
                   ) : (
                     <>
                       <h3
@@ -730,7 +790,7 @@ export default function HomePage() {
                         </button>
                         <button
                           type="button"
-                          onClick={() => handleDeleteTrip(tripToEdit.id, tripToEdit.name)}
+                          onClick={() => setDeleteConfirmingTripId(tripId)}
                           className="rounded-2xl border border-red/30 bg-red/10 px-4 py-3 text-sm font-medium text-red transition hover:bg-red/20"
                         >
                           削除
