@@ -244,3 +244,60 @@ input:focus:not(:focus-visible) {
 .theme-switch__input:checked + .theme-switch__label span::after {
   transform: translate3d(41px, 0, 0);
 }
+
+/* 編集ポップアップの開閉アニメーション */
+@keyframes edit-popup-overlay-enter {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes edit-popup-overlay-exit {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes edit-popup-panel-enter {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes edit-popup-panel-exit {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+}
+
+.edit-popup-overlay {
+  animation: edit-popup-overlay-enter 0.22s ease-out;
+}
+
+.edit-popup-overlay.edit-popup-closing {
+  animation: edit-popup-overlay-exit 0.18s ease-in forwards;
+}
+
+.edit-popup-panel {
+  animation: edit-popup-panel-enter 0.22s ease-out;
+}
+
+.edit-popup-panel.edit-popup-closing {
+  animation: edit-popup-panel-exit 0.18s ease-in forwards;
+}

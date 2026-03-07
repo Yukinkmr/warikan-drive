@@ -18,14 +18,21 @@ export function Settings({ open, onClose, onLogout, currentName, onNameUpdated }
   const [isEditingName, setIsEditingName] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [closing, setClosing] = useState(false);
+  const [closeThenLogout, setCloseThenLogout] = useState(false);
 
   useEffect(() => {
     if (open) {
       setName(currentName);
       setError(null);
       setIsEditingName(false);
+      setClosing(false);
     }
   }, [open, currentName]);
+
+  useEffect(() => {
+    if (!open) setClosing(false);
+  }, [open]);
 
   const handleStartEdit = () => {
     setIsEditingName(true);
@@ -55,19 +62,35 @@ export function Settings({ open, onClose, onLogout, currentName, onNameUpdated }
     }
   };
 
-  if (!open) return null;
+  const requestClose = () => {
+    if (!closing) setClosing(true);
+  };
+
+  const handlePanelAnimationEnd = (e: React.AnimationEvent) => {
+    if (e.animationName === "edit-popup-panel-exit" && closing) {
+      onClose();
+      setClosing(false);
+      if (closeThenLogout) {
+        setCloseThenLogout(false);
+        onLogout();
+      }
+    }
+  };
+
+  if (!open && !closing) return null;
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+      className={`edit-popup-overlay fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 ${closing ? "edit-popup-closing" : ""}`}
       role="dialog"
       aria-modal="true"
       aria-labelledby="settings-modal-title"
-      onClick={onClose}
+      onClick={requestClose}
     >
       <div
-        className="w-full max-w-md rounded-2xl border border-border bg-card p-5 shadow-lg sm:p-6"
+        className={`edit-popup-panel w-full max-w-md rounded-2xl border border-border bg-card p-5 shadow-lg sm:p-6 ${closing ? "edit-popup-closing" : ""}`}
         onClick={(e) => e.stopPropagation()}
+        onAnimationEnd={handlePanelAnimationEnd}
       >
         <div className="flex items-center justify-between">
           <h2 id="settings-modal-title" className="text-lg font-bold text-text">
@@ -75,7 +98,7 @@ export function Settings({ open, onClose, onLogout, currentName, onNameUpdated }
           </h2>
           <button
             type="button"
-            onClick={onClose}
+            onClick={requestClose}
             className="rounded-xl p-2 text-muted transition-all duration-200 ease-out hover:scale-110 hover:bg-border/50 hover:text-text active:scale-95"
             aria-label="閉じる"
           >
@@ -114,7 +137,14 @@ export function Settings({ open, onClose, onLogout, currentName, onNameUpdated }
           </div>
 
           <div className="border-t border-border pt-4">
-            <Button variant="danger" onClick={onLogout} className="w-full">
+            <Button
+              variant="danger"
+              onClick={() => {
+                setCloseThenLogout(true);
+                setClosing(true);
+              }}
+              className="w-full"
+            >
               ログアウト
             </Button>
           </div>
