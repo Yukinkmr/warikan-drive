@@ -91,6 +91,10 @@
   --auth-shadow: 0 8px 32px rgba(15, 23, 42, 0.08);
 }
 
+[data-theme="light"] main {
+  background-color: #cbd5e1;
+}
+
 body {
   font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
   background: var(--bg);
@@ -149,13 +153,12 @@ input:focus:not(:focus-visible) {
   cursor: pointer;
 }
 
-.theme-switch__input:hover + .theme-switch__label,
-.theme-switch__input:focus + .theme-switch__label {
+/* ホバー時のみグレーに（:focus は含めない＝クリック後フォーカスが残ってもカーソルを離せば元に戻る） */
+.theme-switch__input:hover + .theme-switch__label {
   background-color: var(--label);
 }
 
-.theme-switch__input:hover + .theme-switch__label span::after,
-.theme-switch__input:focus + .theme-switch__label span::after {
+.theme-switch__input:hover + .theme-switch__label span::after {
   filter: brightness(1.1);
 }
 
@@ -191,6 +194,10 @@ input:focus:not(:focus-visible) {
   transform: translate3d(0, -50%, 0);
   color: var(--accent);
   transition: color 0.2s;
+}
+
+[data-theme="light"] .theme-switch__label::before {
+  color: #eab308; /* ライトモード時は太陽を黄色に */
 }
 
 /* 月アイコン（ラベルの右外側） */
