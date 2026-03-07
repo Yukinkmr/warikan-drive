@@ -84,6 +84,7 @@ def _request_routes(
     origin: str,
     destination: str,
     departure_rfc: str,
+    time_type: str,
     toll_passes: list[str] | None = None,
 ) -> dict[str, Any]:
     body: dict[str, Any] = {
@@ -104,8 +105,12 @@ def _request_routes(
 
     # 過去時刻だと INVALID_ARGUMENT になるため、未来時刻のみ指定
     if _is_future_datetime(departure_rfc):
-        body["departureTime"] = departure_rfc
-        body["routingPreference"] = "TRAFFIC_AWARE"
+        if time_type == "ARRIVAL":
+            body["arrivalTime"] = departure_rfc
+            body["routingPreference"] = "TRAFFIC_UNAWARE"
+        else:
+            body["departureTime"] = departure_rfc
+            body["routingPreference"] = "TRAFFIC_AWARE"
 
     field_mask = (
         "routes.description,"
@@ -136,6 +141,7 @@ def search_route_segments(
     destination: str,
     departure_time: str,
     payment_method: str,
+    time_type: str = "DEPARTURE",
 ) -> list[dict[str, Any]]:
     """
     経路候補を取得。各候補は summary, distance_km, duration_min, toll_etc_yen, toll_cash_yen を持つ。
@@ -152,6 +158,7 @@ def search_route_segments(
             origin=origin,
             destination=destination,
             departure_rfc=departure_rfc,
+            time_type=time_type,
             toll_passes=None,
         )
         # ETC 料金（JP_ETC を指定）
@@ -160,6 +167,7 @@ def search_route_segments(
             origin=origin,
             destination=destination,
             departure_rfc=departure_rfc,
+            time_type=time_type,
             toll_passes=["JP_ETC"],
         )
     except Exception:

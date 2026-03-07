@@ -49,7 +49,7 @@ export function DayBlock({
           className="rounded p-1.5 text-muted transition-colors hover:bg-red/10 hover:text-red"
           aria-label="この日を削除"
         >
-          🗑
+          ✕
         </button>
       </div>
       <div className="space-y-3">

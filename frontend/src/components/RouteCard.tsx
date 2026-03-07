@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import type { Route, RouteSegment } from "@/types";
-import type { PaymentMethod } from "@/types";
+import type { PaymentMethod, RouteTimeType } from "@/types";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { RouteMap } from "@/components/RouteMap";
@@ -49,6 +49,7 @@ export function RouteCard({
     route.departure_time != null
       ? new Date(route.departure_time).toTimeString().slice(0, 5)
       : "09:00";
+  const timeType: RouteTimeType = route.time_type ?? "DEPARTURE";
 
   async function handleSearch() {
     await Promise.resolve(onSearch());
@@ -98,7 +99,31 @@ export function RouteCard({
           className="w-full rounded-2xl border border-border bg-inputBg px-4 py-3 text-sm text-text outline-none transition placeholder:text-muted focus:border-accent"
         />
         <div className="flex items-center gap-3">
-          <span className="text-sm font-medium text-label">⏰ 出発時刻</span>
+          <span className="text-sm font-medium text-label">⏰ 時刻</span>
+          <div className="inline-flex rounded-2xl border border-border bg-inputBg p-1 text-xs">
+            <button
+              type="button"
+              onClick={() => onUpdate(route.id, "time_type", "DEPARTURE")}
+              className={`rounded-xl px-2.5 py-1 transition ${
+                timeType === "DEPARTURE"
+                  ? "bg-accent text-white"
+                  : "text-label hover:bg-surface"
+              }`}
+            >
+              出発
+            </button>
+            <button
+              type="button"
+              onClick={() => onUpdate(route.id, "time_type", "ARRIVAL")}
+              className={`rounded-xl px-2.5 py-1 transition ${
+                timeType === "ARRIVAL"
+                  ? "bg-accent text-white"
+                  : "text-label hover:bg-surface"
+              }`}
+            >
+              到着
+            </button>
+          </div>
           <input
             type="time"
             value={departureTime}
@@ -148,7 +173,7 @@ export function RouteCard({
         }`}
         disabled={segments.length === 0}
         >
-        {selected ? "✓ 含む" : "割り勘に含む"}
+        {selected ? "✓ 割り勘に含む" : "割り勘に含む"}
         </Button>
       </div>
       {open && segments.length > 0 && (

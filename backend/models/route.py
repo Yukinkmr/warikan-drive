@@ -40,6 +40,7 @@ class Route(Base):
     dest_lat = Column(Numeric(9, 6), nullable=True)
     dest_lng = Column(Numeric(9, 6), nullable=True)
     departure_time = Column(DateTime(timezone=True), nullable=True)
+    time_type = Column(String(20), nullable=False, default="DEPARTURE", server_default="DEPARTURE")
     selected_segment_id = Column(
         UUID(as_uuid=True),
         ForeignKey("route_segments.id", ondelete="SET NULL", use_alter=True, name="fk_routes_segment"),

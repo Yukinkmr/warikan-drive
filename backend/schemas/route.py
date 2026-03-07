@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Literal
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict
@@ -21,6 +22,7 @@ class RouteCreate(BaseModel):
     origin: str
     destination: str
     departure_time: datetime | None = None
+    time_type: Literal["DEPARTURE", "ARRIVAL"] = "DEPARTURE"
 
 
 class RouteUpdate(BaseModel):
@@ -28,6 +30,7 @@ class RouteUpdate(BaseModel):
     origin: str | None = None
     destination: str | None = None
     departure_time: datetime | None = None
+    time_type: Literal["DEPARTURE", "ARRIVAL"] | None = None
     is_include_split: bool | None = None
 
 
@@ -44,6 +47,7 @@ class RouteResponse(BaseModel):
     dest_lat: float | None
     dest_lng: float | None
     departure_time: datetime | None
+    time_type: Literal["DEPARTURE", "ARRIVAL"]
     selected_segment_id: UUID | None
     distance_km: float | None
     toll_yen: int
@@ -56,6 +60,7 @@ class RouteResponse(BaseModel):
 class RouteSearchRequest(BaseModel):
     departure_time: str  # ISO8601 e.g. 2026-03-04T09:00:00+09:00
     payment_method: str  # ETC | CASH
+    time_type: Literal["DEPARTURE", "ARRIVAL"] = "DEPARTURE"
 
 
 class RouteSearchResponse(BaseModel):

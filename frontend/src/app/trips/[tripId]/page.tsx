@@ -45,6 +45,7 @@ export default function TripDetailPage({ params }: PageProps) {
       origin: current.origin,
       destination: current.destination,
       departure_time: current.departure_time,
+      time_type: current.time_type,
     }),
     []
   );
@@ -128,9 +129,12 @@ export default function TripDetailPage({ params }: PageProps) {
         ),
       }));
 
-      // 2. 出発時刻は即時 API 送信（選択なのでデバウンス不要）
-      if (field === "departure_time") {
-        const payload: Record<string, unknown> = { departure_time: value };
+      // 2. 出発/到着時刻設定は即時 API 送信（選択なのでデバウンス不要）
+      if (field === "departure_time" || field === "time_type") {
+        const payload: Record<string, unknown> =
+          field === "departure_time"
+            ? { departure_time: value }
+            : { time_type: value };
         routesApi
           .update(day.id, routeId, payload as any)
           .then((updated) => {
@@ -230,6 +234,7 @@ export default function TripDetailPage({ params }: PageProps) {
         const { segments } = await routesApi.search(routeId, {
           departure_time: dep,
           payment_method: trip.payment_method,
+          time_type: route.time_type ?? "DEPARTURE",
         });
         setSegmentsByRouteId((prev) => ({ ...prev, [routeId]: segments }));
         if (segments.length > 0) {

@@ -1,4 +1,5 @@
 export type PaymentMethod = "ETC" | "CASH";
+export type RouteTimeType = "DEPARTURE" | "ARRIVAL";
 
 export interface AuthUser {
   id: string;
@@ -52,6 +53,7 @@ export interface Route {
   dest_lat: number | null;
   dest_lng: number | null;
   departure_time: string | null;
+  time_type: RouteTimeType;
   selected_segment_id: string | null;
   distance_km: number | null;
   toll_yen: number;

@@ -75,15 +75,15 @@ export const daysApi = {
 // Routes (under day)
 export const routesApi = {
   list: (dayId: string) => fetchApi<import("@/types").Route[]>(`/days/${dayId}/routes`),
-  create: (dayId: string, body: { origin: string; destination: string; departure_time?: string; label?: string }) =>
+  create: (dayId: string, body: { origin: string; destination: string; departure_time?: string; time_type?: import("@/types").RouteTimeType; label?: string }) =>
     fetchApi<import("@/types").Route>(`/days/${dayId}/routes`, { method: "POST", body: JSON.stringify(body) }),
-  update: (dayId: string, routeId: string, body: Partial<{ origin: string; destination: string; departure_time: string; is_include_split: boolean }>) =>
+  update: (dayId: string, routeId: string, body: Partial<{ origin: string; destination: string; departure_time: string; time_type: import("@/types").RouteTimeType; is_include_split: boolean }>) =>
     fetchApi<import("@/types").Route>(`/days/${dayId}/routes/${routeId}`, { method: "PATCH", body: JSON.stringify(body) }),
   delete: (dayId: string, routeId: string) =>
     fetchApi<void>(`/days/${dayId}/routes/${routeId}`, { method: "DELETE" }),
   listSegments: (routeId: string) =>
     fetchApi<{ segments: import("@/types").RouteSegment[] }>(`/routes/${routeId}/segments`),
-  search: (routeId: string, body: { departure_time: string; payment_method: string }) =>
+  search: (routeId: string, body: { departure_time: string; payment_method: string; time_type: import("@/types").RouteTimeType }) =>
     fetchApi<{ segments: import("@/types").RouteSegment[] }>(`/routes/${routeId}/search`, {
       method: "POST",
       body: JSON.stringify(body),

@@ -229,7 +229,7 @@ export function RouteMap({
               className={`flex w-full items-center gap-3 rounded-2xl border p-3 text-left transition-all ${
                 isSelected
                   ? "border-accent bg-accentDim shadow-glow"
-                  : "border-border bg-surface hover:border-label/50"
+                  : "border-border bg-surface hover:border-label/50 hover:border-accent"
               }`}
             >
               {/* 地図上のライン色に対応するドット */}
