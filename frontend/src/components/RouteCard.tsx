@@ -5,7 +5,7 @@ import type { Route, RouteSegment } from "@/types";
 import type { PaymentMethod } from "@/types";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
-import { SegmentSelector } from "@/components/SegmentSelector";
+import { RouteMap } from "@/components/RouteMap";
 import { formatYen } from "@/lib/utils";
 
 export function RouteCard({
@@ -140,13 +140,18 @@ export function RouteCard({
         )}
       </div>
       {open && segments.length > 0 && (
-        <SegmentSelector
+        <RouteMap
+          origin={route.origin}
+          originLat={route.origin_lat}
+          originLng={route.origin_lng}
+          destination={route.destination}
+          destLat={route.dest_lat}
+          destLng={route.dest_lng}
           segments={segments}
           selectedId={route.selected_segment_id}
           payment={payment}
           onSelect={(id) => {
             onSelectSeg(id);
-            setOpen(false);
           }}
         />
       )}

@@ -44,6 +44,8 @@ services:
       args:
         # 同一オリジンに飛ばしてプロキシで中継（CORS 回避）
         NEXT_PUBLIC_API_BASE_URL: /api/proxy
+        # Google Maps JavaScript API キー（クライアントサイドマップ表示用）
+        NEXT_PUBLIC_GOOGLE_MAPS_KEY: ${NEXT_PUBLIC_GOOGLE_MAPS_KEY:-}
     ports:
       - "3000:3000"
     environment:

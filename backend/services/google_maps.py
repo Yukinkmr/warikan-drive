@@ -5,7 +5,7 @@ departure_time は ETC 時間帯割引計算に必須。
 
 import os
 import re
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from typing import Any
 
 import httpx
@@ -33,6 +33,102 @@ def _parse_iso_to_rfc3339(iso_or_time: str) -> str:
     return f"{today}T{s}:00+09:00"
 
 
+def _is_future_datetime(rfc3339: str) -> bool:
+    """Google Routes API の departureTime は未来時刻が必要。"""
+    try:
+        dt = datetime.fromisoformat(rfc3339.replace("Z", "+00:00"))
+    except Exception:
+        return False
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    return dt > datetime.now(timezone.utc) + timedelta(minutes=1)
+
+
+def _money_to_yen(money: dict[str, Any] | None) -> int:
+    if not isinstance(money, dict):
+        return 0
+    units = int(money.get("units") or 0)
+    nanos = int(money.get("nanos") or 0)
+    return units + int(round(nanos / 1_000_000_000))
+
+
+def _route_key(route: dict[str, Any]) -> str:
+    poly = route.get("polyline") or ""
+    if poly:
+        return poly
+    return f"{route.get('summary', '')}|{route.get('distance_km', 0)}|{route.get('duration_min', 0)}"
+
+
+def _find_matching_route(
+    base_route: dict[str, Any],
+    candidates: list[dict[str, Any]],
+) -> dict[str, Any] | None:
+    """polyline優先、次に距離・所要時間の近似で対応ルートを見つける。"""
+    key = _route_key(base_route)
+    for c in candidates:
+        if _route_key(c) == key:
+            return c
+
+    bd = float(base_route.get("distance_km", 0) or 0)
+    bt = int(base_route.get("duration_min", 0) or 0)
+    for c in candidates:
+        cd = float(c.get("distance_km", 0) or 0)
+        ct = int(c.get("duration_min", 0) or 0)
+        if abs(bd - cd) <= 1.0 and abs(bt - ct) <= 8:
+            return c
+    return None
+
+
+def _request_routes(
+    api_key: str,
+    origin: str,
+    destination: str,
+    departure_rfc: str,
+    toll_passes: list[str] | None = None,
+) -> dict[str, Any]:
+    body: dict[str, Any] = {
+        "origin": {"address": origin},
+        "destination": {"address": destination},
+        "travelMode": "DRIVE",
+        "computeAlternativeRoutes": True,
+        "extraComputations": ["TOLLS"],
+        "languageCode": "ja",
+        "regionCode": "JP",
+        "routeModifiers": {
+            "vehicleInfo": {"emissionType": "GASOLINE"},
+        },
+    }
+
+    if toll_passes:
+        body["routeModifiers"]["tollPasses"] = toll_passes
+
+    # 過去時刻だと INVALID_ARGUMENT になるため、未来時刻のみ指定
+    if _is_future_datetime(departure_rfc):
+        body["departureTime"] = departure_rfc
+        body["routingPreference"] = "TRAFFIC_AWARE"
+
+    field_mask = (
+        "routes.description,"
+        "routes.duration,"
+        "routes.distanceMeters,"
+        "routes.polyline.encodedPolyline,"
+        "routes.travelAdvisory.tollInfo"
+    )
+
+    with httpx.Client(timeout=15.0) as client:
+        resp = client.post(
+            ROUTES_API_URL,
+            json=body,
+            headers={
+                "X-Goog-Api-Key": api_key,
+                "X-Goog-FieldMask": field_mask,
+                "Content-Type": "application/json",
+            },
+        )
+        resp.raise_for_status()
+        return resp.json()
+
+
 def search_route_segments(
     origin: str,
     destination: str,
@@ -47,47 +143,55 @@ def search_route_segments(
         return _mock_segments(origin, destination, payment_method)
 
     departure_rfc = _parse_iso_to_rfc3339(departure_time)
-    body = {
-        "origin": {"address": origin},
-        "destination": {"address": destination},
-        "travelMode": "DRIVE",
-        "departureTime": departure_rfc,
-        "routeModifiers": {
-            "vehicleInfo": {"emissionType": "GASOLINE"},
-        },
-        "extraComputations": ["TOLLS"],
-        "routeObjective": "ROUTE_OBJECTIVE_BEST",
-        "alternativeRouteCount": 3,
-    }
-
-    field_mask = (
-        "routes.duration,"
-        "routes.distanceMeters,"
-        "routes.polyline.encodedPolyline,"
-        "routes.travelAdvisory.tollInfo,"
-        "routes.summary"
-    )
-
     try:
-        with httpx.Client(timeout=15.0) as client:
-            resp = client.post(
-                ROUTES_API_URL,
-                json=body,
-                headers={
-                    "X-Goog-Api-Key": api_key,
-                    "X-Goog-FieldMask": field_mask,
-                    "Content-Type": "application/json",
-                },
-            )
-            resp.raise_for_status()
-            data = resp.json()
+        # 現金料金（通行券なし）
+        cash_data = _request_routes(
+            api_key=api_key,
+            origin=origin,
+            destination=destination,
+            departure_rfc=departure_rfc,
+            toll_passes=None,
+        )
+        # ETC 料金（JP_ETC を指定）
+        etc_data = _request_routes(
+            api_key=api_key,
+            origin=origin,
+            destination=destination,
+            departure_rfc=departure_rfc,
+            toll_passes=["JP_ETC"],
+        )
     except Exception:
         return _mock_segments(origin, destination, payment_method)
 
-    return _parse_routes_response(data, payment_method)
+    cash_routes = _parse_routes_response(cash_data)
+    etc_routes = _parse_routes_response(etc_data)
+
+    if not cash_routes and not etc_routes:
+        return _mock_segments(origin, destination, payment_method)
+
+    merged: list[dict[str, Any]] = []
+    base = cash_routes if cash_routes else etc_routes
+    for r in base:
+        etc_match = _find_matching_route(r, etc_routes)
+        toll_cash = int(r.get("toll_cash_yen", 0) or 0)
+        toll_etc = int((etc_match or {}).get("toll_cash_yen", toll_cash) or 0)
+        if toll_cash == 0 and toll_etc > 0:
+            toll_cash = toll_etc
+        if toll_etc == 0 and toll_cash > 0:
+            toll_etc = toll_cash
+        merged.append({
+            "polyline": r.get("polyline"),
+            "distance_km": r.get("distance_km", 0.0),
+            "duration_min": r.get("duration_min", 0),
+            "summary": r.get("summary") or "経路",
+            "toll_etc_yen": toll_etc,
+            "toll_cash_yen": toll_cash,
+        })
+
+    return merged
 
 
-def _parse_routes_response(data: dict, payment_method: str) -> list[dict[str, Any]]:
+def _parse_routes_response(data: dict[str, Any]) -> list[dict[str, Any]]:
     routes = data.get("routes") or []
     out = []
     for i, r in enumerate(routes):
@@ -96,36 +200,26 @@ def _parse_routes_response(data: dict, payment_method: str) -> list[dict[str, An
         distance_m = int(r.get("distanceMeters") or 0)
         distance_km = round(distance_m / 1000, 2)
         toll_info = (r.get("travelAdvisory") or {}).get("tollInfo") or {}
-        # Routes API の tollInfo は通貨単位で返る場合がある。日本は円。
         estimated_price = toll_info.get("estimatedPrice") or []
         toll_yen = 0
         for p in estimated_price:
-            if isinstance(p, dict):
-                units = p.get("units", "") or ""
-                if "JPY" in units or "円" in str(p):
-                    toll_yen = int(p.get("nanos", 0) or 0) // 1_000_000 + int(p.get("units", 0) or 0) * 1_000_000_000 // 1_000_000
-                    break
-                toll_yen = int(p.get("units", 0) or 0)
+            if isinstance(p, dict) and p.get("currencyCode") in (None, "JPY"):
+                toll_yen = _money_to_yen(p)
                 break
             if isinstance(p, (int, float)):
                 toll_yen = int(p)
                 break
-        summary = (r.get("summary") or f"経路{i+1}").replace("\n", " ")
+        summary = (r.get("description") or f"経路{i+1}").replace("\n", " ")
         if not summary:
             summary = f"経路 {i+1}"
-        # ETC/現金の差は簡易的に約85%で運用（実装では同一でも可）
-        toll_etc = int(toll_yen * 0.85) if toll_yen else 0
-        toll_cash = toll_yen
         out.append({
             "polyline": r.get("polyline", {}).get("encodedPolyline"),
             "distance_km": distance_km,
             "duration_min": duration_min,
-            "toll_etc_yen": toll_etc,
-            "toll_cash_yen": toll_cash,
+            "toll_etc_yen": toll_yen,
+            "toll_cash_yen": toll_yen,
             "summary": summary[:200],
         })
-    if not out:
-        return _mock_segments("", "", payment_method)
     return out
 
 
@@ -139,5 +233,21 @@ def _mock_segments(origin: str, destination: str, payment_method: str) -> list[d
             "toll_etc_yen": 900,
             "toll_cash_yen": 1100,
             "summary": "一般道・高速経由",
-        }
+        },
+        {
+            "polyline": None,
+            "distance_km": 56.8,
+            "duration_min": 68,
+            "toll_etc_yen": 1200,
+            "toll_cash_yen": 1450,
+            "summary": "首都高経由",
+        },
+        {
+            "polyline": None,
+            "distance_km": 62.3,
+            "duration_min": 73,
+            "toll_etc_yen": 700,
+            "toll_cash_yen": 900,
+            "summary": "一般道中心",
+        },
     ]
