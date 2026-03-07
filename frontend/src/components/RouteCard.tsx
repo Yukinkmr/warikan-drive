@@ -119,24 +119,22 @@ export function RouteCard({
               ? "🔄 再検索"
               : "🔍 経路を検索"}
         </Button>
-        {segments.length > 0 && (
-          <Button
-            onClick={() => setOpen((o) => !o)}
-            variant="ghost"
-            className="flex-1 text-xs"
-          >
-            {open ? "▲ 閉じる" : "▼ 経路を選ぶ"}
-          </Button>
-        )}
-        {selSeg && (
-          <Button
-            onClick={onToggle}
-            variant="ghost"
-            className={`flex-1 text-xs ${selected ? "border-accent text-accent" : ""}`}
-          >
-            {selected ? "✓ 含む" : "割り勘に含む"}
-          </Button>
-        )}
+        <Button
+        onClick={() => setOpen((o) => !o)}
+        variant="ghost"
+        className="flex-1 text-xs"
+        disabled={segments.length === 0}
+        >
+        {open ? "▲ 閉じる" : "▼ 経路を選ぶ"}
+        </Button>
+        <Button
+        onClick={onToggle}
+        variant="ghost"
+        className={`flex-1 text-xs ${selected ? "border-accent text-accent" : ""}`}
+        disabled={segments.length === 0}
+        >
+        {selected ? "✓ 含む" : "割り勘に含む"}
+        </Button>
       </div>
       {open && segments.length > 0 && (
         <RouteMap
@@ -156,12 +154,12 @@ export function RouteCard({
       )}
       {selSeg && (
         <a
-          href={`https://www.google.com/maps/dir/${encodeURIComponent(route.origin)}/${encodeURIComponent(route.destination)}`}
+          href={`https://www.google.com/maps/dir/${route.origin}/${route.destination}`}
           target="_blank"
           rel="noopener noreferrer"
           className="mt-3 block text-center text-xs font-medium text-accent no-underline transition-colors hover:underline"
         >
-          🗺 Google Maps でナビ →
+          🗺 Google Maps に移動
         </a>
       )}
     </div>

@@ -35,6 +35,16 @@ export default function TripDetailPage() {
     Map<string, { dayId: string; routeId: string; field: string; value: string }>
   >(new Map());
 
+  const mergeRouteKeepingLocalInputs = useCallback(
+    (current: Route, updated: Route) => ({
+      ...updated,
+      origin: current.origin,
+      destination: current.destination,
+      departure_time: current.departure_time,
+    }),
+    []
+  );
+
   const loadTrip = useCallback(async () => {
     try {
       const t = await tripsApi.get(tripId);
@@ -118,7 +128,7 @@ export default function TripDetailPage() {
             setRoutesByDayId((prev) => ({
               ...prev,
               [day.id]: (prev[day.id] ?? []).map((r) =>
-                r.id === routeId ? updated : r
+                r.id === routeId ? mergeRouteKeepingLocalInputs(r, updated) : r
               ),
             }));
           })
@@ -149,7 +159,7 @@ export default function TripDetailPage() {
               setRoutesByDayId((prev) => ({
                 ...prev,
                 [p.dayId]: (prev[p.dayId] ?? []).map((r) =>
-                  r.id === p.routeId ? updated : r
+                  r.id === p.routeId ? mergeRouteKeepingLocalInputs(r, updated) : r
                 ),
               }));
             })
@@ -157,7 +167,7 @@ export default function TripDetailPage() {
         });
       }, 400);
     },
-    [days, routesByDayId]
+    [days, routesByDayId, mergeRouteKeepingLocalInputs]
   );
 
   const addRoute = useCallback(
