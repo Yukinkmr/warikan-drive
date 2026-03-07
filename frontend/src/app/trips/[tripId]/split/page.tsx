@@ -43,7 +43,7 @@ export default function SplitPage() {
 
   const [fuelEff, setFuelEff] = useState(15);
   const [gasPrice, setGasPrice] = useState(170);
-  const [driverWeight, setDriverWeight] = useState(0.7);
+  const [driverWeight, setDriverWeight] = useState(0.5);
   const [people, setPeople] = useState(4);
 
   const payment = (trip?.payment_method as PaymentMethod) || "ETC";
@@ -105,7 +105,7 @@ export default function SplitPage() {
     if (!trip) return;
     setFuelEff(Number(trip.fuel_efficiency) || 15);
     setGasPrice(Number(trip.gas_price) || 170);
-    setDriverWeight(Number(trip.driver_weight) || 0.7);
+    setDriverWeight(Number(trip.driver_weight) || 0.5);
   }, [trip]);
 
   useEffect(() => {
@@ -312,7 +312,7 @@ export default function SplitPage() {
               </div>
               <input
                 type="range"
-                min={50}
+                min={0}
                 max={100}
                 step={5}
                 value={Math.round(driverWeight * 100)}
@@ -322,8 +322,8 @@ export default function SplitPage() {
                 className="w-full h-2 rounded-full appearance-none bg-inputBg border border-border accent-accent"
               />
               <div className="flex justify-between text-[11px] text-muted mt-0.5">
-                <span>優遇大</span>
                 <span>優遇なし</span>
+                <span>優遇大</span>
               </div>
             </div>
           </div>

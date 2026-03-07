@@ -20,7 +20,7 @@ CREATE TABLE trips (
   payment_method payment_method_enum NOT NULL DEFAULT 'ETC',
   fuel_efficiency DECIMAL(5,2) NOT NULL,
   gas_price INT NOT NULL,
-  driver_weight DECIMAL(3,2) NOT NULL CHECK (driver_weight >= 0.5 AND driver_weight <= 1.0),
+  driver_weight DECIMAL(3,2) NOT NULL CHECK (driver_weight >= 0.0 AND driver_weight <= 1.0),
   created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );

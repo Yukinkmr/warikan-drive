@@ -252,7 +252,7 @@ function RouteTab({ days, setDays, payment, setPayment, selIds, setSelIds, onGoS
 function SplitTab({ days, selIds, payment, onSave }) {
   const { C } = useTheme();
   const allRoutes = days.flatMap(d=>d.routes);
-  const [settings, setSettings] = useState({ fuelEff:15, gasPrice:170, people:4, driverWeight:0.7 });
+  const [settings, setSettings] = useState({ fuelEff:15, gasPrice:170, people:4, driverWeight:0.5 });
   const [extraCosts, setExtraCosts] = useState([]);
   const [newCost, setNewCost] = useState({ label:"", amount:"", type:"parking" });
   const [result, setResult] = useState(null);
@@ -293,8 +293,8 @@ function SplitTab({ days, selIds, payment, onSave }) {
           </div>
           <div>
             <div style={{ display:"flex", justifyContent:"space-between", marginBottom:4 }}><span style={{ fontSize:13, color:C.label }}>運転手優遇</span><span style={{ fontSize:13, fontWeight:600, color:C.text }}>{pct}%</span></div>
-            <Slider min={50} max={100} step={5} value={pct} onChange={e=>setSettings(s=>({...s,driverWeight:parseInt(e.target.value)/100}))} />
-            <div style={{ display:"flex", justifyContent:"space-between", fontSize:11, color:C.muted, marginTop:2 }}><span>優遇大</span><span>優遇なし</span></div>
+            <Slider min={0} max={100} step={5} value={pct} onChange={e=>setSettings(s=>({...s,driverWeight:parseInt(e.target.value)/100}))} />
+            <div style={{ display:"flex", justifyContent:"space-between", fontSize:11, color:C.muted, marginTop:2 }}><span>優遇なし</span><span>優遇大</span></div>
           </div>
         </div>
       </Card>

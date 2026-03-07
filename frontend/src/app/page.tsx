@@ -48,7 +48,7 @@ export default function HomePage() {
         payment_method: "ETC",
         fuel_efficiency: 15,
         gas_price: 170,
-        driver_weight: 0.7,
+        driver_weight: 0.5,
         owner_id: DEFAULT_OWNER_ID,
       });
       const day = await daysApi.create(trip.id, { date: todayStr() });
