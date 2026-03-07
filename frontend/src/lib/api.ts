@@ -152,4 +152,9 @@ export const authApi = {
       body: JSON.stringify(body),
     }),
   me: () => fetchApi<import("@/types").AuthUser>("/auth/me"),
+  updateMe: (body: { name: string }) =>
+    fetchApi<import("@/types").AuthUser>("/auth/me", {
+      method: "PATCH",
+      body: JSON.stringify(body),
+    }),
 };

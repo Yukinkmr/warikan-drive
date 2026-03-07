@@ -29,6 +29,10 @@ class GoogleLoginRequest(BaseModel):
     redirect_uri: str
 
 
+class UpdateMeRequest(BaseModel):
+    name: str
+
+
 class AuthResponse(BaseModel):
     token: str
     user: AuthUserResponse

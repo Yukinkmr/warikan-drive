@@ -11,6 +11,7 @@ type AuthContextValue = {
   loginWithGoogleCode: (code: string, redirectUri: string) => Promise<void>;
   register: (name: string, email: string, password: string) => Promise<void>;
   logout: () => void;
+  refreshUser: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextValue>({
@@ -70,8 +71,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(null);
   };
 
+  const refreshUser = async () => {
+    const token = localStorage.getItem(AUTH_TOKEN_STORAGE_KEY);
+    if (!token) return;
+    const me = await authApi.me();
+    setUser(me);
+  };
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, loginWithGoogleCode, register, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, loginWithGoogleCode, register, logout, refreshUser }}>
       {children}
     </AuthContext.Provider>
   );

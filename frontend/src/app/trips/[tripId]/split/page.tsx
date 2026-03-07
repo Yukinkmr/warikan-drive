@@ -466,22 +466,22 @@ function ExtraCostForm({
   };
 
   return (
-    <div className="flex gap-2 mt-2.5">
+    <div className="flex min-w-0 flex-wrap items-stretch gap-2 mt-2.5">
       <input
         type="text"
         placeholder="名前（例：駐車場代）"
         value={label}
         onChange={(e) => setLabel(e.target.value)}
-        className="flex-[2] rounded-2xl border border-border bg-inputBg px-4 py-3 text-sm text-text outline-none transition focus:border-accent"
+        className="min-w-0 flex-[2] basis-0 rounded-2xl border border-border bg-inputBg px-4 py-3 text-sm text-text outline-none transition focus:border-accent"
       />
       <input
         type="number"
         placeholder="金額"
         value={amount}
         onChange={(e) => setAmount(e.target.value)}
-        className="flex-1 rounded-2xl border border-border bg-inputBg px-4 py-3 text-sm text-text outline-none transition focus:border-accent"
+        className="min-w-0 flex-1 min-w-[5rem] basis-0 rounded-2xl border border-border bg-inputBg px-4 py-3 text-sm text-text outline-none transition focus:border-accent"
       />
-      <Button onClick={submit} variant="ghost" className="whitespace-nowrap">
+      <Button onClick={submit} variant="ghost" className="shrink-0 whitespace-nowrap">
         追加
       </Button>
     </div>

@@ -1,11 +1,12 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { daysApi, routesApi, tripsApi } from "@/lib/api";
 import type { Trip } from "@/types";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { Settings } from "@/components/Settings";
 import { useAuth } from "@/contexts/AuthContext";
 
 const PASSWORD_RULE = /^(?=.*[A-Za-z])(?=.*\d).{8,}$/;
@@ -27,7 +28,7 @@ function defaultNewTripName() {
 
 export default function HomePage() {
   const router = useRouter();
-  const { user, loading: authLoading, login, register, logout } = useAuth();
+  const { user, loading: authLoading, login, register, logout, refreshUser } = useAuth();
   const [trips, setTrips] = useState<Trip[]>([]);
   const [loadingTrips, setLoadingTrips] = useState(false);
   const [creating, setCreating] = useState(false);
@@ -41,6 +42,9 @@ export default function HomePage() {
   const [newTripName, setNewTripName] = useState("");
   const [editingTripId, setEditingTripId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState("");
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [filterKeyword, setFilterKeyword] = useState("");
+  const [filterDate, setFilterDate] = useState("");
 
   useEffect(() => {
     if (!user) {
@@ -173,6 +177,18 @@ export default function HomePage() {
       // 失敗時は何もしない
     }
   };
+
+  const filteredTrips = useMemo(() => {
+    return trips.filter((trip) => {
+      const kw = filterKeyword.trim().toLowerCase();
+      if (kw && !trip.name.toLowerCase().includes(kw)) return false;
+      if (filterDate) {
+        const tripDate = new Date(trip.created_at).toISOString().slice(0, 10);
+        if (tripDate !== filterDate) return false;
+      }
+      return true;
+    });
+  }, [trips, filterKeyword, filterDate]);
 
   if (authLoading) {
     return (
@@ -400,13 +416,34 @@ export default function HomePage() {
             <div className="flex flex-col items-end gap-2">
               <button
                 type="button"
-                onClick={logout}
-                className="rounded-xl border border-white/15 px-3 py-2 text-xs font-semibold text-white/80 transition hover:border-white/30 hover:text-white"
+                onClick={() => setIsSettingsOpen(true)}
+                className="rounded-xl border border-white/15 p-2.5 text-white/80 transition-all duration-200 ease-out hover:scale-105 hover:border-white/30 hover:text-white active:scale-95"
+                aria-label="設定"
               >
-                Logout
+                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
+                  />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
               </button>
               <ThemeToggle />
             </div>
+            {isSettingsOpen && (
+              <Settings
+                open={isSettingsOpen}
+                onClose={() => setIsSettingsOpen(false)}
+                onLogout={() => {
+                  setIsSettingsOpen(false);
+                  logout();
+                }}
+                currentName={user.name}
+                onNameUpdated={refreshUser}
+              />
+            )}
           </div>
         </header>
 
@@ -465,8 +502,11 @@ export default function HomePage() {
                       type="button"
                       onClick={handleCreateSubmit}
                       disabled={creating}
-                      className="rounded-2xl bg-accent px-4 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:opacity-50"
+                      className="flex items-center justify-center gap-2 rounded-2xl bg-accent px-4 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:opacity-50"
                     >
+                      {creating && (
+                        <span className="h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-white/30 border-t-white" aria-hidden />
+                      )}
                       {creating ? "作成中…" : "完了"}
                     </button>
                   ) : (
@@ -474,8 +514,11 @@ export default function HomePage() {
                       type="button"
                       onClick={() => doCreateTrip(defaultNewTripName())}
                       disabled={creating}
-                      className="rounded-2xl border border-border bg-surface px-4 py-3 text-sm font-semibold text-label transition hover:bg-border/50"
+                      className="flex items-center justify-center gap-2 rounded-2xl border border-border bg-surface px-4 py-3 text-sm font-semibold text-label transition hover:bg-border/50 disabled:opacity-70"
                     >
+                      {creating && (
+                        <span className="h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-label/50 border-t-label" aria-hidden />
+                      )}
                       {creating ? "作成中…" : "スキップ"}
                     </button>
                   )}
@@ -502,8 +545,59 @@ export default function HomePage() {
               </p>
             </div>
           ) : (
+            <>
+              <div className="mb-4 flex min-w-0 flex-wrap items-center gap-3 rounded-2xl border border-border bg-card p-3 sm:p-4">
+                <div className="flex min-w-0 flex-1 flex-wrap items-center gap-3">
+                  <input
+                    type="text"
+                    placeholder="キーワードで検索"
+                    value={filterKeyword}
+                    onChange={(e) => setFilterKeyword(e.target.value)}
+                    className="min-w-0 flex-1 rounded-2xl border border-border bg-inputBg px-4 py-2.5 text-sm text-text outline-none transition placeholder:text-muted focus:border-accent sm:max-w-[200px]"
+                  />
+                  <div className="flex items-center gap-2">
+                    <label htmlFor="filter-date" className="shrink-0 text-sm text-muted">
+                      作成日:
+                    </label>
+                    <input
+                      id="filter-date"
+                      type="date"
+                      value={filterDate}
+                      onChange={(e) => setFilterDate(e.target.value)}
+                      className="rounded-2xl border border-border bg-inputBg px-4 py-2.5 text-sm text-text outline-none transition focus:border-accent"
+                    />
+                  </div>
+                </div>
+                {(filterKeyword.trim() || filterDate) && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setFilterKeyword("");
+                      setFilterDate("");
+                    }}
+                    className="shrink-0 rounded-2xl border border-border bg-surface px-3 py-2 text-xs font-medium text-label transition hover:bg-border/50"
+                  >
+                    クリア
+                  </button>
+                )}
+              </div>
+              {filteredTrips.length === 0 ? (
+                <div className="rounded-2xl border border-border bg-card px-4 py-8 text-center">
+                  <p className="text-sm text-muted">条件に一致する旅行はありません。</p>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setFilterKeyword("");
+                      setFilterDate("");
+                    }}
+                    className="mt-2 text-sm font-medium text-accent hover:underline"
+                  >
+                    絞り込みを解除
+                  </button>
+                </div>
+              ) : (
             <div className="space-y-3">
-              {trips.map((trip) => (
+              {filteredTrips.map((trip) => (
                 <div
                   key={trip.id}
                   className="flex items-center gap-3 rounded-2xl border border-border bg-card px-4 py-4 transition hover:border-accent/50 hover:bg-surface"
@@ -579,6 +673,8 @@ export default function HomePage() {
                 </div>
               ))}
             </div>
+              )}
+            </>
           )}
         </main>
       </div>

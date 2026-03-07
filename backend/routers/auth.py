@@ -19,6 +19,7 @@ from schemas.auth import (
     GoogleLoginRequest,
     LoginRequest,
     RegisterRequest,
+    UpdateMeRequest,
 )
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -88,4 +89,17 @@ def google_login(body: GoogleLoginRequest, db: Session = Depends(get_db)):
 
 @router.get("/me", response_model=AuthUserResponse)
 def me(current_user: User = Depends(get_current_user)):
+    return AuthUserResponse.model_validate(current_user)
+
+
+@router.patch("/me", response_model=AuthUserResponse)
+def update_me(body: UpdateMeRequest, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    name = body.name.strip()
+    if not name:
+        raise HTTPException(status_code=422, detail="Username is required")
+    if len(name) > 50:
+        raise HTTPException(status_code=422, detail="Username must be at most 50 characters")
+    current_user.name = name
+    db.commit()
+    db.refresh(current_user)
     return AuthUserResponse.model_validate(current_user)
