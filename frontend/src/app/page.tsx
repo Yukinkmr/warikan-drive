@@ -15,6 +15,14 @@ function todayStr() {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
+function defaultNewTripName() {
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  return `${y}${m}${dd}_ドライブ`;
+}
+
 export default function HomePage() {
   const router = useRouter();
   const { user, loading: authLoading, login, register, logout } = useAuth();
@@ -27,6 +35,10 @@ export default function HomePage() {
   const [password, setPassword] = useState("");
   const [authError, setAuthError] = useState<string | null>(null);
   const [createError, setCreateError] = useState<string | null>(null);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [newTripName, setNewTripName] = useState("");
+  const [editingTripId, setEditingTripId] = useState<string | null>(null);
+  const [editingName, setEditingName] = useState("");
 
   useEffect(() => {
     if (!user) {
@@ -80,12 +92,12 @@ export default function HomePage() {
     }
   };
 
-  const handleCreateTrip = async () => {
+  const doCreateTrip = async (name: string) => {
     setCreating(true);
     setCreateError(null);
     try {
       const trip = await tripsApi.create({
-        name: "新しい旅行",
+        name,
         payment_method: "ETC",
         fuel_efficiency: 15,
         gas_price: 170,
@@ -93,11 +105,41 @@ export default function HomePage() {
       });
       const day = await daysApi.create(trip.id, { date: todayStr() });
       await routesApi.create(day.id, { origin: "", destination: "" });
+      setShowCreateModal(false);
+      setNewTripName("");
       router.push(`/trips/${trip.id}`);
     } catch (err) {
       setCreateError(err instanceof Error ? err.message : "作成に失敗しました。");
     } finally {
       setCreating(false);
+    }
+  };
+
+  const handleOpenCreateModal = () => {
+    setCreateError(null);
+    setNewTripName("");
+    setShowCreateModal(true);
+  };
+
+  const handleCreateSubmit = () => {
+    const name = newTripName.trim();
+    doCreateTrip(name ? name : defaultNewTripName());
+  };
+
+  const handleSaveTripName = async (tripId: string) => {
+    const name = editingName.trim();
+    if (!name) {
+      setEditingTripId(null);
+      return;
+    }
+    try {
+      await tripsApi.update(tripId, { name });
+      setTrips((prev) =>
+        prev.map((t) => (t.id === tripId ? { ...t, name } : t))
+      );
+      setEditingTripId(null);
+    } catch {
+      // 失敗時は編集状態のまま
     }
   };
 
@@ -308,13 +350,64 @@ export default function HomePage() {
             </div>
             <button
               type="button"
-              onClick={handleCreateTrip}
+              onClick={handleOpenCreateModal}
               disabled={creating}
               className="rounded-2xl bg-accent px-4 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {creating ? "作成中…" : "＋ 新しい旅行"}
             </button>
           </div>
+
+          {showCreateModal && (
+            <div
+              className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="create-trip-modal-title"
+              onClick={() => !creating && setShowCreateModal(false)}
+            >
+              <div
+                className="w-full max-w-md rounded-2xl border border-border bg-card p-5 shadow-lg sm:p-6"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <h3
+                  id="create-trip-modal-title"
+                  className="text-sm font-semibold text-label"
+                >
+                  旅程の名前
+                </h3>
+                <input
+                  type="text"
+                  value={newTripName}
+                  onChange={(e) => setNewTripName(e.target.value)}
+                  placeholder={defaultNewTripName()}
+                  className="mt-3 w-full rounded-2xl border border-border bg-inputBg px-4 py-3 text-sm text-text outline-none transition placeholder:text-muted focus:border-accent"
+                  autoFocus
+                />
+                <div className="mt-4 flex justify-end gap-2">
+                  {newTripName.trim() ? (
+                    <button
+                      type="button"
+                      onClick={handleCreateSubmit}
+                      disabled={creating}
+                      className="rounded-2xl bg-accent px-4 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:opacity-50"
+                    >
+                      {creating ? "作成中…" : "完了"}
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => doCreateTrip(defaultNewTripName())}
+                      disabled={creating}
+                      className="rounded-2xl border border-border bg-surface px-4 py-3 text-sm font-semibold text-label transition hover:bg-border/50"
+                    >
+                      {creating ? "作成中…" : "スキップ"}
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
 
           {createError && (
             <p className="mb-4 rounded-2xl border border-red/30 bg-red/10 px-4 py-3 text-sm text-red">
@@ -336,23 +429,63 @@ export default function HomePage() {
           ) : (
             <div className="space-y-3">
               {trips.map((trip) => (
-                <Link
+                <div
                   key={trip.id}
-                  href={`/trips/${trip.id}`}
-                  className="block rounded-2xl border border-border bg-card px-4 py-4 transition hover:border-accent/50 hover:bg-surface"
+                  className="flex items-center gap-3 rounded-2xl border border-border bg-card px-4 py-4 transition hover:border-accent/50 hover:bg-surface"
                 >
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="min-w-0">
-                      <h3 className="truncate text-base font-semibold text-text">
-                        {trip.name}
-                      </h3>
-                      <p className="mt-1 text-sm text-muted">
-                        作成日 {new Date(trip.created_at).toLocaleDateString("ja-JP")}
-                      </p>
-                    </div>
-                    <span className="text-sm font-medium text-accent">開く →</span>
+                  <div className="min-w-0 flex-1">
+                    {editingTripId === trip.id ? (
+                      <div className="flex flex-wrap items-center gap-2">
+                        <input
+                          type="text"
+                          value={editingName}
+                          onChange={(e) => setEditingName(e.target.value)}
+                          className="min-w-0 flex-1 rounded-2xl border border-border bg-inputBg px-3 py-2 text-sm text-text outline-none focus:border-accent"
+                          autoFocus
+                        />
+                        <button
+                          type="button"
+                          onClick={() => handleSaveTripName(trip.id)}
+                          className="rounded-2xl bg-accent px-3 py-2 text-sm font-semibold text-white hover:opacity-90"
+                        >
+                          保存
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setEditingTripId(null);
+                            setEditingName("");
+                          }}
+                          className="rounded-2xl border border-border px-3 py-2 text-sm font-medium text-label hover:bg-border/50"
+                        >
+                          キャンセル
+                        </button>
+                      </div>
+                    ) : (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setEditingTripId(trip.id);
+                            setEditingName(trip.name);
+                          }}
+                          className="block w-full truncate text-left text-base font-semibold text-text hover:text-accent"
+                        >
+                          {trip.name}
+                        </button>
+                        <p className="mt-1 text-sm text-muted">
+                          作成日 {new Date(trip.created_at).toLocaleDateString("ja-JP")}
+                        </p>
+                      </>
+                    )}
                   </div>
-                </Link>
+                  <Link
+                    href={`/trips/${trip.id}`}
+                    className="shrink-0 text-sm font-medium text-accent hover:underline"
+                  >
+                    開く →
+                  </Link>
+                </div>
               ))}
             </div>
           )}
