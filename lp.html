@@ -1,0 +1,893 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Warikan Drive — 素早く割り勘、旅終わりのドライバーさんへ</title>
+    <style>
+        :root {
+            --bg: #080c18;
+            --surface: #1a1d27;
+            --card: #21253a;
+            --border: #2e3350;
+            --accent: #4f7dff;
+            --accent2: #7b5dff;
+            --green: #10b981;
+            --red: #ef4444;
+            --text: #e8eaf6;
+            --muted: #7b82a8;
+            --label: #a0a8cc;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            overflow-x: hidden;
+        }
+
+        /* ── Utility ── */
+        .container {
+            max-width: 1080px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        .tag {
+            display: inline-block;
+            background: rgba(79, 125, 255, 0.12);
+            border: 1px solid rgba(79, 125, 255, 0.3);
+            border-radius: 99px;
+            padding: 5px 16px;
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--accent);
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+        }
+
+        .glow {
+            box-shadow: 0 0 0 1px #4f7dff44, 0 8px 40px #4f7dff22;
+        }
+
+        /* ── Nav ── */
+        nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            padding: 16px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            backdrop-filter: blur(20px);
+            background: rgba(8, 12, 24, 0.8);
+            border-bottom: 1px solid rgba(46, 51, 80, 0.5);
+        }
+
+        .nav-logo {
+            font-size: 18px;
+            font-weight: 900;
+            letter-spacing: -0.02em;
+            background: linear-gradient(135deg, #fff, var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .nav-cta {
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            border: none;
+            color: #fff;
+            padding: 9px 22px;
+            border-radius: 99px;
+            font-weight: 700;
+            font-size: 13px;
+            cursor: pointer;
+            transition: opacity .2s;
+        }
+
+        .nav-cta:hover {
+            opacity: .85;
+        }
+
+        /* ── Hero ── */
+        #hero {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 120px 24px 80px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-bg {
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(ellipse 80% 60% at 50% 40%, #0d1a40 0%, var(--bg) 70%);
+            z-index: 0;
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 1;
+        }
+
+        .hero-car {
+            font-size: 80px;
+            margin-bottom: 24px;
+            filter: drop-shadow(0 0 48px #4f7dff88);
+            animation: float 3s ease-in-out infinite;
+            display: block;
+        }
+
+        @keyframes float {
+
+            0%,
+            100% {
+                transform: translateY(0)
+            }
+
+            50% {
+                transform: translateY(-14px)
+            }
+        }
+
+        .hero-title {
+            font-size: clamp(48px, 8vw, 96px);
+            font-weight: 900;
+            letter-spacing: -0.04em;
+            background: linear-gradient(135deg, #fff 30%, var(--accent) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            line-height: 1.05;
+            margin: 16px 0 20px;
+        }
+
+        .hero-sub {
+            font-size: clamp(16px, 2.5vw, 22px);
+            color: var(--muted);
+            margin-bottom: 40px;
+            line-height: 1.7;
+        }
+
+        .hero-sub span {
+            color: var(--label);
+        }
+
+        .hero-btns {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: 56px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            border: none;
+            color: #fff;
+            padding: 14px 32px;
+            border-radius: 99px;
+            font-weight: 700;
+            font-size: 15px;
+            cursor: pointer;
+            transition: all .2s;
+            box-shadow: 0 0 0 1px #4f7dff44, 0 8px 32px #4f7dff33;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0 0 1px #4f7dff88, 0 12px 40px #4f7dff44;
+        }
+
+        .btn-ghost {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--label);
+            padding: 14px 32px;
+            border-radius: 99px;
+            font-weight: 600;
+            font-size: 15px;
+            cursor: pointer;
+            transition: all .2s;
+        }
+
+        .btn-ghost:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .hero-badges {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .hero-badge {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--border);
+            border-radius: 99px;
+            padding: 7px 16px;
+            font-size: 12px;
+            color: var(--label);
+        }
+
+        /* Stars */
+        .stars {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .star {
+            position: absolute;
+            border-radius: 99px;
+            background: #fff;
+            animation: twinkle var(--d) ease-in-out infinite;
+            opacity: 0;
+        }
+
+        @keyframes twinkle {
+
+            0%,
+            100% {
+                opacity: 0
+            }
+
+            50% {
+                opacity: var(--o)
+            }
+        }
+
+        /* ── Problem ── */
+        #problem {
+            padding: 100px 0;
+            background: linear-gradient(180deg, var(--bg) 0%, #0d0d1a 100%);
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 56px;
+        }
+
+        .section-title {
+            font-size: clamp(28px, 4vw, 48px);
+            font-weight: 800;
+            margin: 12px 0 16px;
+            letter-spacing: -0.02em;
+        }
+
+        .section-sub {
+            font-size: 16px;
+            color: var(--muted);
+            line-height: 1.7;
+        }
+
+        .problem-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+        }
+
+        .problem-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 32px;
+            transition: all .3s;
+        }
+
+        .problem-card:hover {
+            border-color: rgba(239, 68, 68, 0.4);
+            transform: translateY(-4px);
+            box-shadow: 0 8px 40px rgba(239, 68, 68, 0.08);
+        }
+
+        .problem-icon {
+            font-size: 40px;
+            margin-bottom: 16px;
+        }
+
+        .problem-title {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .problem-desc {
+            font-size: 14px;
+            color: var(--muted);
+            line-height: 1.7;
+        }
+
+        /* ── Features ── */
+        #features {
+            padding: 100px 0;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .feature-card {
+            background: rgba(79, 125, 255, 0.05);
+            border: 1px solid rgba(79, 125, 255, 0.2);
+            border-radius: 20px;
+            padding: 32px;
+            transition: all .3s;
+        }
+
+        .feature-card:hover {
+            background: rgba(79, 125, 255, 0.1);
+            border-color: rgba(79, 125, 255, 0.5);
+            transform: translateY(-4px);
+            box-shadow: 0 8px 40px rgba(79, 125, 255, 0.12);
+        }
+
+        .feature-num {
+            font-size: 11px;
+            color: var(--accent);
+            font-weight: 700;
+            letter-spacing: 0.15em;
+            margin-bottom: 12px;
+        }
+
+        .feature-icon {
+            font-size: 32px;
+            margin-bottom: 12px;
+        }
+
+        .feature-title {
+            font-size: 17px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .feature-desc {
+            font-size: 13px;
+            color: var(--muted);
+            line-height: 1.7;
+        }
+
+        /* ── How it works ── */
+        #how {
+            padding: 100px 0;
+            background: linear-gradient(180deg, var(--bg) 0%, #0a0f1e 100%);
+        }
+
+        .steps {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 0;
+            position: relative;
+            margin-bottom: 56px;
+        }
+
+        .steps::before {
+            content: '';
+            position: absolute;
+            top: 36px;
+            left: 10%;
+            right: 10%;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border), var(--border), transparent);
+            z-index: 0;
+        }
+
+        .step {
+            text-align: center;
+            padding: 0 16px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .step-circle {
+            width: 72px;
+            height: 72px;
+            border-radius: 99px;
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            margin: 0 auto 20px;
+            box-shadow: 0 0 32px rgba(79, 125, 255, 0.4);
+        }
+
+        .step-title {
+            font-size: 15px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .step-desc {
+            font-size: 12px;
+            color: var(--muted);
+            line-height: 1.6;
+        }
+
+        .result-demo {
+            background: var(--card);
+            border: 1px solid var(--accent);
+            border-radius: 24px;
+            padding: 36px;
+            max-width: 700px;
+            margin: 0 auto;
+            box-shadow: 0 0 0 1px #4f7dff33, 0 16px 64px #4f7dff18;
+        }
+
+        .result-demo-title {
+            text-align: center;
+            font-size: 13px;
+            color: var(--muted);
+            margin-bottom: 24px;
+        }
+
+        .result-demo-route {
+            text-align: center;
+            font-weight: 700;
+            font-size: 18px;
+            margin-bottom: 24px;
+        }
+
+        .result-stats {
+            display: flex;
+            justify-content: center;
+            gap: 32px;
+            flex-wrap: wrap;
+        }
+
+        .result-stat {
+            text-align: center;
+        }
+
+        .result-stat-label {
+            font-size: 11px;
+            color: var(--muted);
+            margin-bottom: 4px;
+        }
+
+        .result-stat-val {
+            font-size: 28px;
+            font-weight: 800;
+        }
+
+        .sep {
+            width: 1px;
+            background: var(--border);
+            align-self: stretch;
+        }
+
+        /* ── Stack ── */
+        #stack {
+            padding: 100px 0;
+        }
+
+        .stack-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 12px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .stack-row {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 16px 24px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .stack-layer {
+            font-size: 11px;
+            color: var(--muted);
+            min-width: 90px;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+        }
+
+        .stack-tech {
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+        .stack-badge {
+            margin-left: auto;
+            font-size: 10px;
+            background: rgba(16, 185, 129, 0.12);
+            color: var(--green);
+            border-radius: 99px;
+            padding: 3px 10px;
+            font-weight: 700;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        /* ── CTA ── */
+        #cta {
+            padding: 120px 24px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .cta-bg {
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(ellipse 70% 60% at 50% 50%, #0d1a40 0%, var(--bg) 70%);
+        }
+
+        .cta-content {
+            position: relative;
+            z-index: 1;
+        }
+
+        .cta-car {
+            font-size: 72px;
+            display: block;
+            margin-bottom: 24px;
+            filter: drop-shadow(0 0 40px #4f7dff);
+            animation: float 3s ease-in-out infinite;
+        }
+
+        .cta-title {
+            font-size: clamp(36px, 6vw, 72px);
+            font-weight: 900;
+            letter-spacing: -0.04em;
+            background: linear-gradient(135deg, #fff 30%, var(--accent) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 16px;
+        }
+
+        .cta-sub {
+            font-size: 18px;
+            color: var(--muted);
+            margin-bottom: 48px;
+        }
+
+        .cta-pills {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: 48px;
+        }
+
+        .cta-pill {
+            background: rgba(79, 125, 255, 0.1);
+            border: 1px solid rgba(79, 125, 255, 0.3);
+            border-radius: 99px;
+            padding: 8px 20px;
+            font-size: 13px;
+            color: var(--label);
+        }
+
+        /* ── Footer ── */
+        footer {
+            border-top: 1px solid var(--border);
+            padding: 32px 24px;
+            text-align: center;
+        }
+
+        .footer-logo {
+            font-size: 20px;
+            font-weight: 900;
+            background: linear-gradient(135deg, #fff, var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 8px;
+        }
+
+        .footer-sub {
+            font-size: 13px;
+            color: var(--muted);
+        }
+
+        /* ── Scroll animation ── */
+        .fade-up {
+            opacity: 0;
+            transform: translateY(32px);
+            transition: opacity .7s ease, transform .7s ease;
+        }
+
+        .fade-up.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        @media(max-width:600px) {
+            .steps::before {
+                display: none;
+            }
+
+            .result-stats {
+                gap: 20px;
+            }
+
+            nav .nav-cta {
+                display: none;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Nav -->
+    <nav>
+        <div class="nav-logo">🚗 Warikan Drive</div>
+        <button class="nav-cta"
+            onclick="document.getElementById('cta').scrollIntoView({behavior:'smooth'})">今すぐ試す</button>
+    </nav>
+
+    <!-- Hero -->
+    <section id="hero">
+        <div class="hero-bg"></div>
+        <div class="stars" id="stars"></div>
+        <div class="hero-content">
+            <span class="tag">Hackathon Project 2026</span>
+            <span class="hero-car">🚗</span>
+            <h1 class="hero-title">Warikan Drive</h1>
+            <p class="hero-sub">素早く割り勘、<span>旅終わりのドライバーさんへ。</span><br>ETC料金・ガソリン代・運転手傾斜を<br>その場で計算して即集金。</p>
+            <div class="hero-btns">
+                <button class="btn-primary"
+                    onclick="document.getElementById('how').scrollIntoView({behavior:'smooth'})">使い方を見る →</button>
+                <button class="btn-ghost"
+                    onclick="document.getElementById('features').scrollIntoView({behavior:'smooth'})">機能一覧</button>
+            </div>
+            <div class="hero-badges">
+                <span class="hero-badge">🛣️ ETC 時間帯割引 自動計算</span>
+                <span class="hero-badge">📍 Google Maps 連携</span>
+                <span class="hero-badge">🚗 運転手傾斜割り勘</span>
+                <span class="hero-badge">💴 PayPay 即時請求</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- Problem -->
+    <section id="problem">
+        <div class="container">
+            <div class="section-header fade-up">
+                <span class="tag">Problem</span>
+                <h2 class="section-title">ドライブ後の3つの悩み</h2>
+                <p class="section-sub">楽しかった旅も、帰り道のお金の計算で気まずくなっていませんか？</p>
+            </div>
+            <div class="problem-grid">
+                <div class="problem-card fade-up">
+                    <div class="problem-icon">😓</div>
+                    <div class="problem-title">傾斜計算が面倒</div>
+                    <div class="problem-desc">運転手に多く負担してほしいけど、計算が難しくて結局均等割りに。気を使って損してしまう。</div>
+                </div>
+                <div class="problem-card fade-up">
+                    <div class="problem-icon">🛣️</div>
+                    <div class="problem-title">ETC料金がわからない</div>
+                    <div class="problem-desc">高速料金はあとで明細を見るまで正確にはわからない。その場でみんなに説明できない。</div>
+                </div>
+                <div class="problem-card fade-up">
+                    <div class="problem-icon">💸</div>
+                    <div class="problem-title">集金が遅れる</div>
+                    <div class="problem-desc">「あとで払う」が続いて、結局運転手がずっと立て替えたまま。催促するのも気まずい。</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features -->
+    <section id="features">
+        <div class="container">
+            <div class="section-header fade-up">
+                <span class="tag">Features</span>
+                <h2 class="section-title">Warikan Drive が全部解決</h2>
+                <p class="section-sub">出発前に全員の負担金額を確定。その場で集金まで完結。</p>
+            </div>
+            <div class="features-grid">
+                <div class="feature-card fade-up">
+                    <div class="feature-num">FEATURE 01</div>
+                    <div class="feature-icon">🗺️</div>
+                    <div class="feature-title">経路 × 料金を自動取得</div>
+                    <div class="feature-desc">Google Maps Routes APIで複数経路を比較。ETC/現金・時間帯割引（深夜・休日）を出発時刻から自動反映。</div>
+                </div>
+                <div class="feature-card fade-up">
+                    <div class="feature-num">FEATURE 02</div>
+                    <div class="feature-icon">🚗</div>
+                    <div class="feature-title">運転手傾斜割り勘</div>
+                    <div class="feature-desc">スライダーで運転手の負担係数を設定。ガソリン代 + 高速代 + 追加費用をまとめて公平に計算。</div>
+                </div>
+                <div class="feature-card fade-up">
+                    <div class="feature-num">FEATURE 03</div>
+                    <div class="feature-icon">📅</div>
+                    <div class="feature-title">日別 × 複数ルート管理</div>
+                    <div class="feature-desc">旅行ごとに日付・ルートを管理。駐車場・レンタカー・カーシェア代も合算。複数日の旅行も対応。</div>
+                </div>
+                <div class="feature-card fade-up">
+                    <div class="feature-num">FEATURE 04</div>
+                    <div class="feature-icon">📱</div>
+                    <div class="feature-title">Google Maps ナビ連携</div>
+                    <div class="feature-desc">選択したルートをそのままGoogle Mapsで開いてナビ起動。アプリを切り替える手間ゼロ。</div>
+                </div>
+                <div class="feature-card fade-up">
+                    <div class="feature-num">FEATURE 05</div>
+                    <div class="feature-icon">💴</div>
+                    <div class="feature-title">PayPay 即時請求</div>
+                    <div class="feature-desc">計算結果から即座にPayPay請求リンクを発行。メンバー全員に一斉送信で集金を完結。</div>
+                </div>
+                <div class="feature-card fade-up">
+                    <div class="feature-num">FEATURE 06</div>
+                    <div class="feature-icon">🌙</div>
+                    <div class="feature-title">ダーク / ライトモード</div>
+                    <div class="feature-desc">夜のドライブでも目に優しいダークモード搭載。スマホ最適化で車内でもサクサク使える。</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- How it works -->
+    <section id="how">
+        <div class="container">
+            <div class="section-header fade-up">
+                <span class="tag">How it works</span>
+                <h2 class="section-title">使い方は 4 ステップ</h2>
+                <p class="section-sub">難しい設定は不要。目的地を入れるだけで、あとは全自動。</p>
+            </div>
+            <div class="steps fade-up">
+                <div class="step">
+                    <div class="step-circle">📍</div>
+                    <div class="step-title">ルート入力</div>
+                    <div class="step-desc">出発地・目的地・出発時刻を入力</div>
+                </div>
+                <div class="step">
+                    <div class="step-circle">🔍</div>
+                    <div class="step-title">経路選択</div>
+                    <div class="step-desc">複数候補から最適なルートを選ぶ</div>
+                </div>
+                <div class="step">
+                    <div class="step-circle">⚙️</div>
+                    <div class="step-title">人数・設定</div>
+                    <div class="step-desc">人数・燃費・運転手優遇率を設定</div>
+                </div>
+                <div class="step">
+                    <div class="step-circle">💰</div>
+                    <div class="step-title">割り勘 完了</div>
+                    <div class="step-desc">全員の負担金額が一発で確定</div>
+                </div>
+            </div>
+            <div class="result-demo fade-up">
+                <div class="result-demo-title">計算例：東京駅 → 箱根（4人・ETC・運転手優遇70%）</div>
+                <div class="result-demo-route">🗺 東京駅 → 箱根 · 95.2 km</div>
+                <div class="result-stats">
+                    <div class="result-stat">
+                        <div class="result-stat-label">総コスト</div>
+                        <div class="result-stat-val" style="color:var(--accent)">¥5,840</div>
+                    </div>
+                    <div class="sep"></div>
+                    <div class="result-stat">
+                        <div class="result-stat-label">🚗 運転手</div>
+                        <div class="result-stat-val" style="color:var(--green)">¥1,120</div>
+                    </div>
+                    <div class="sep"></div>
+                    <div class="result-stat">
+                        <div class="result-stat-label">🧑 同乗者 × 3</div>
+                        <div class="result-stat-val" style="color:var(--text)">¥1,573</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Stack -->
+    <section id="stack">
+        <div class="container">
+            <div class="section-header fade-up">
+                <span class="tag">Tech Stack</span>
+                <h2 class="section-title">技術スタック</h2>
+                <p class="section-sub">モダンな技術で、完全無料でデプロイ。</p>
+            </div>
+            <div class="stack-grid fade-up">
+                <div class="stack-row">
+                    <div class="stack-layer">Frontend</div>
+                    <div class="stack-tech">Next.js 14 + TypeScript</div>
+                    <div class="stack-badge">Vercel 無料</div>
+                </div>
+                <div class="stack-row">
+                    <div class="stack-layer">Styling</div>
+                    <div class="stack-tech">Tailwind CSS + shadcn/ui</div>
+                </div>
+                <div class="stack-row">
+                    <div class="stack-layer">Backend</div>
+                    <div class="stack-tech">FastAPI (Python 3.11)</div>
+                    <div class="stack-badge">Vercel 無料</div>
+                </div>
+                <div class="stack-row">
+                    <div class="stack-layer">Database</div>
+                    <div class="stack-tech">PostgreSQL (Supabase)</div>
+                    <div class="stack-badge">無料</div>
+                </div>
+                <div class="stack-row">
+                    <div class="stack-layer">外部 API</div>
+                    <div class="stack-tech">Google Maps Routes API</div>
+                </div>
+                <div class="stack-row">
+                    <div class="stack-layer">決済</div>
+                    <div class="stack-tech">PayPay API</div>
+                </div>
+                <div class="stack-row">
+                    <div class="stack-layer">環境管理</div>
+                    <div class="stack-tech">Docker / docker-compose</div>
+                </div>
+                <div class="stack-row">
+                    <div class="stack-layer">CI / CD</div>
+                    <div class="stack-tech">GitHub Actions</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA -->
+    <section id="cta">
+        <div class="cta-bg"></div>
+        <div class="cta-content fade-up">
+            <span class="cta-car">🚗</span>
+            <h2 class="cta-title">Warikan Drive</h2>
+            <p class="cta-sub">素早く割り勘、旅終わりのドライバーさんへ。</p>
+            <div class="cta-pills">
+                <span class="cta-pill">🛣️ ETC 時間帯割引 自動計算</span>
+                <span class="cta-pill">🚗 運転手傾斜割り勘</span>
+                <span class="cta-pill">📍 Google Maps 連携</span>
+                <span class="cta-pill">💴 PayPay 即時請求</span>
+            </div>
+            <button class="btn-primary" style="font-size:16px;padding:16px 40px;">今すぐ試す →</button>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="footer-logo">🚗 Warikan Drive</div>
+        <div class="footer-sub">Built with ❤️ for Hackathon 2026</div>
+    </footer>
+
+    <script>
+        // Stars
+        const sc = document.getElementById('stars');
+        for (let i = 0; i < 50; i++) {
+            const s = document.createElement('div');
+            s.className = 'star';
+            const sz = Math.random() * 2 + 1;
+            s.style.cssText = `width:${sz}px;height:${sz}px;top:${Math.random() * 100}%;left:${Math.random() * 100}%;--d:${2 + Math.random() * 5}s;--o:${0.15 + Math.random() * 0.5};animation-delay:${Math.random() * 5}s`;
+            sc.appendChild(s);
+        }
+
+        // Scroll fade-in
+        const obs = new IntersectionObserver(entries => {
+            entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+        }, { threshold: 0.15 });
+        document.querySelectorAll('.fade-up').forEach(el => obs.observe(el));
+    </script>
+</body>
+
+</html>
