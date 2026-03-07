@@ -53,7 +53,7 @@ export interface Route {
   dest_lat: number | null;
   dest_lng: number | null;
   departure_time: string | null;
-  time_type: RouteTimeType;
+  time_type: "DEPARTURE" | "ARRIVAL" | null;
   selected_segment_id: string | null;
   distance_km: number | null;
   toll_yen: number;

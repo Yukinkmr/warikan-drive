@@ -32,6 +32,7 @@ class RouteUpdate(BaseModel):
     departure_time: datetime | None = None
     time_type: Literal["DEPARTURE", "ARRIVAL"] | None = None
     is_include_split: bool | None = None
+    day_id: UUID | None = None
 
 
 class RouteResponse(BaseModel):

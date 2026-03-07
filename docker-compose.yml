@@ -32,6 +32,8 @@ services:
       # .env の DATABASE_URL を使用（Supabase 推奨）。未設定で local-db 時はローカル db に接続
       DATABASE_URL: ${DATABASE_URL:-postgresql://postgres:postgres@db:5432/warikan_drive}
       GOOGLE_MAPS_API_KEY: ${GOOGLE_MAPS_API_KEY:-}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
     env_file:
       - .env
     # db は profiles: [local-db] のため、depends_on にするとプロファイルなしで down がエラーになるので省略。
@@ -46,6 +48,7 @@ services:
         NEXT_PUBLIC_API_BASE_URL: /api/proxy
         # Google Maps JavaScript API キー（クライアントサイドマップ表示用）
         NEXT_PUBLIC_GOOGLE_MAPS_KEY: ${NEXT_PUBLIC_GOOGLE_MAPS_KEY:-}
+        NEXT_PUBLIC_GOOGLE_CLIENT_ID: ${NEXT_PUBLIC_GOOGLE_CLIENT_ID:-}
     ports:
       - "3000:3000"
     environment:

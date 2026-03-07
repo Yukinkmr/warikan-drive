@@ -19,6 +19,7 @@ services:
     environment:
       NODE_ENV: development
       NEXT_PUBLIC_API_BASE_URL: /api/proxy
+      NEXT_PUBLIC_GOOGLE_CLIENT_ID: ${NEXT_PUBLIC_GOOGLE_CLIENT_ID:-}
     command: ["sh", "-c", "npm install && npm run dev"]
 
 volumes:

@@ -12,8 +12,11 @@ import { Label } from "@/components/ui/Label";
 import { Pill } from "@/components/ui/Pill";
 import { Button } from "@/components/ui/Button";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { SplitView } from "@/app/trips/[tripId]/SplitView";
 import { useAuth } from "@/contexts/AuthContext";
 import { todayStr } from "@/lib/utils";
+
+const SWIPE_THRESHOLD_PX = 60;
 
 type PageProps = { params: Promise<{ tripId: string }> };
 
@@ -34,6 +37,8 @@ export default function TripDetailPage({ params }: PageProps) {
   const [dateInput, setDateInput] = useState(todayStr());
   const [payment, setPayment] = useState<PaymentMethod>("ETC");
   const [loading, setLoading] = useState(true);
+  const [activeView, setActiveView] = useState<"detail" | "split">("detail");
+  const swipeStartX = useRef<number | null>(null);
   const updateRouteDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pendingUpdatesRef = useRef<
     Map<string, { dayId: string; routeId: string; field: string; value: string }>
@@ -104,6 +109,8 @@ export default function TripDetailPage({ params }: PageProps) {
   useEffect(() => {
     if (!user || !tripId || !trip) return;
     loadDays();
+    // trip?.id で「どの旅行か」を追跡しており、trip オブジェクト全体は意図的に省略
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, tripId, trip?.id, loadDays]);
 
   useEffect(() => {
@@ -419,24 +426,56 @@ export default function TripDetailPage({ params }: PageProps) {
             </div>
           </div>
           <nav className="mt-4 flex sm:mt-5" role="tablist">
-            <span
-              className="flex-1 border-b-2 border-white py-3 text-center text-sm font-semibold text-white sm:py-3.5"
+            <button
+              type="button"
+              onClick={() => setActiveView("detail")}
+              className={`flex-1 border-b-2 py-3 text-center text-sm font-medium transition-colors sm:py-3.5 ${
+                activeView === "detail"
+                  ? "border-white text-white font-semibold"
+                  : "border-transparent text-white/60 hover:text-white"
+              }`}
               role="tab"
-              aria-selected="true"
+              aria-selected={activeView === "detail"}
             >
               🗺 ルート管理
-            </span>
-            <Link
-              href={`/trips/${tripId}/split`}
-              className="flex-1 border-b-2 border-transparent py-3 text-center text-sm font-medium text-white/60 transition-colors hover:text-white sm:py-3.5"
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveView("split")}
+              className={`flex-1 border-b-2 py-3 text-center text-sm font-medium transition-colors sm:py-3.5 ${
+                activeView === "split"
+                  ? "border-white text-white font-semibold"
+                  : "border-transparent text-white/60 hover:text-white"
+              }`}
               role="tab"
+              aria-selected={activeView === "split"}
             >
               💰 割り勘計算
-            </Link>
+            </button>
           </nav>
         </header>
 
-        <main className="p-4 pb-8 sm:p-5 md:p-6 md:pb-10 lg:p-8">
+        <main
+          className="p-4 pb-8 sm:p-5 md:p-6 md:pb-10 lg:p-8 touch-pan-y"
+          onTouchStart={(e) => {
+            swipeStartX.current = e.touches[0]?.clientX ?? null;
+          }}
+          onTouchEnd={(e) => {
+            const start = swipeStartX.current;
+            if (start == null) return;
+            const end = e.changedTouches[0]?.clientX ?? start;
+            const diff = start - end;
+            if (Math.abs(diff) >= SWIPE_THRESHOLD_PX) {
+              if (diff > 0) setActiveView("split");
+              else setActiveView("detail");
+            }
+            swipeStartX.current = null;
+          }}
+        >
+        {activeView === "split" ? (
+          <SplitView tripId={tripId} />
+        ) : (
+          <>
         <Card className="mb-4 flex items-center gap-3">
           <span className="text-[13px] font-semibold text-label">
             高速料金
@@ -501,17 +540,18 @@ export default function TripDetailPage({ params }: PageProps) {
           </div>
         </Card>
 
-        <Link href={`/trips/${tripId}/split`} className="block sm:max-w-md">
-          <Button
-            disabled={selCount === 0}
-            variant="primary"
-            className="w-full py-3.5 text-sm"
-          >
-            {selCount > 0
-              ? `${selCount}ルートで割り勘計算 →`
-              : "経路を選択し「割り勘に含む」を設定してください"}
-          </Button>
-        </Link>
+        <Button
+          onClick={() => setActiveView("split")}
+          disabled={selCount === 0}
+          variant="primary"
+          className="w-full py-3.5 text-sm sm:max-w-md"
+        >
+          {selCount > 0
+            ? `${selCount}ルートで割り勘計算 →`
+            : "経路を選択し「割り勘に含む」を設定してください"}
+        </Button>
+          </>
+        )}
         </main>
       </div>
     </div>
