@@ -55,6 +55,17 @@ app.include_router(payments.router, prefix="/api/v1")
 app.include_router(members.router, prefix="/api/v1")
 
 
+@app.get("/")
+def root():
+    return {
+        "name": "割り勘ドライブ API",
+        "version": "0.1.0",
+        "docs": "/docs",
+        "redoc": "/redoc",
+        "health": "/api/v1/health",
+    }
+
+
 @app.get("/api/v1/health")
 def health():
     return {"status": "ok"}
