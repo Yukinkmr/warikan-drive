@@ -22,7 +22,7 @@ export function Button({
       onClick={onClick}
       disabled={disabled}
       className={cn(
-        "rounded-[10px] border px-4 py-2.5 text-sm font-semibold tracking-tight transition-all duration-150",
+        "rounded-2xl border px-4 py-3 text-sm font-semibold tracking-tight transition-all duration-150",
         disabled && "cursor-not-allowed border-border bg-surface text-muted opacity-70",
         !disabled && variant === "primary" && "border-transparent bg-accent text-white shadow-glow hover:opacity-95 active:scale-[0.98]",
         !disabled && variant === "ghost" && "border-border bg-surface text-label hover:bg-border/50 hover:border-border",

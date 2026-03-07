@@ -228,11 +228,14 @@ export default function SplitPage() {
             <ThemeToggle />
           </div>
           <div className="mt-4 flex items-center gap-3 sm:mt-5">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/10 text-xl sm:h-11 sm:w-11 md:h-12 md:w-12 md:text-2xl">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-white/10 text-xl sm:h-11 sm:w-11 md:h-12 md:w-12 md:text-2xl">
               💰
             </div>
             <div className="min-w-0 flex-1">
-              <h1 className="truncate text-xl font-bold tracking-tight text-white sm:text-2xl md:text-[1.65rem]">
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/55">
+                割り勘
+              </p>
+              <h1 className="mt-1 truncate text-xl font-bold tracking-tight text-white sm:text-2xl md:text-[1.65rem]">
                 {trip.name}
               </h1>
               <p className="mt-0.5 text-xs text-white/70 sm:text-sm">割り勘計算</p>
@@ -302,7 +305,7 @@ export default function SplitPage() {
                 onChange={(e) =>
                   setGasPrice(parseInt(e.target.value, 10) || 0)
                 }
-                className="w-20 rounded-lg border border-border bg-inputBg px-2.5 py-1.5 text-sm text-text outline-none focus:border-accent"
+                className="w-24 rounded-2xl border border-border bg-inputBg px-4 py-3 text-sm text-text outline-none transition focus:border-accent"
               />
               <span className="text-muted">円/L</span>
             </div>
@@ -314,7 +317,7 @@ export default function SplitPage() {
                     key={n}
                     type="button"
                     onClick={() => setPeople(n)}
-                    className={`rounded-full border px-4 py-1.5 text-sm font-semibold transition-colors ${
+                    className={`rounded-2xl border px-4 py-2 text-sm font-semibold transition-colors ${
                       people === n
                         ? "border-accent bg-accent-dim text-accent"
                         : "border-border bg-transparent text-muted hover:border-accent/50"
@@ -390,7 +393,7 @@ export default function SplitPage() {
             className="border-accent shadow-glow"
           >
             <div className="text-center mb-4">
-              <div className="text-[11px] uppercase tracking-wider text-muted mb-1">
+              <div className="text-xs font-semibold uppercase tracking-[0.2em] text-muted mb-1.5">
                 合計コスト
               </div>
               <div className="text-4xl font-extrabold tracking-tight text-accent">
@@ -421,14 +424,14 @@ export default function SplitPage() {
               ))}
             </div>
             <div className="flex gap-3 mb-3">
-              <div className="flex-1 rounded-card border border-accent bg-statBg p-3 text-center shadow-glow">
-                <div className="text-[11px] text-muted mb-0.5">🚗 運転手</div>
+              <div className="flex-1 rounded-2xl border border-accent bg-statBg p-3 text-center shadow-glow">
+                <div className="text-xs font-medium text-muted mb-0.5">🚗 運転手</div>
                 <div className="font-bold text-lg text-accent">
                   {formatYen(splitResult.driver_yen)}
                 </div>
               </div>
-              <div className="flex-1 rounded-card border border-border bg-statBg p-3 text-center">
-                <div className="text-[11px] text-muted mb-0.5">
+              <div className="flex-1 rounded-2xl border border-border bg-statBg p-3 text-center">
+                <div className="text-xs font-medium text-muted mb-0.5">
                   🧑‍🤝‍🧑 同乗者×{people - 1}
                 </div>
                 <div className="font-bold text-lg text-text">
@@ -462,20 +465,20 @@ function ExtraCostForm({
   };
 
   return (
-    <div className="flex gap-1.5 mt-2.5">
+    <div className="flex gap-2 mt-2.5">
       <input
         type="text"
         placeholder="名前（例：駐車場代）"
         value={label}
         onChange={(e) => setLabel(e.target.value)}
-        className="flex-[2] rounded-[10px] border border-border bg-inputBg px-3 py-2 text-sm text-text outline-none focus:border-accent"
+        className="flex-[2] rounded-2xl border border-border bg-inputBg px-4 py-3 text-sm text-text outline-none transition focus:border-accent"
       />
       <input
         type="number"
         placeholder="金額"
         value={amount}
         onChange={(e) => setAmount(e.target.value)}
-        className="flex-1 rounded-[10px] border border-border bg-inputBg px-3 py-2 text-sm text-text outline-none"
+        className="flex-1 rounded-2xl border border-border bg-inputBg px-4 py-3 text-sm text-text outline-none transition focus:border-accent"
       />
       <Button onClick={submit} variant="ghost" className="whitespace-nowrap">
         追加

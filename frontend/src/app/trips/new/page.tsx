@@ -85,24 +85,26 @@ export default function NewTripPage() {
   if (error) {
     return (
       <div className="flex min-h-screen w-full justify-center bg-bg p-4 text-text">
-        <div className="w-full max-w-app md:max-w-app-md">
-          <p className="text-red font-medium">{error}</p>
-        <p className="text-sm text-muted mt-2">
-          使用中の API: <code className="text-label">{API_BASE}</code>
-        </p>
-        <p className="text-sm text-muted mt-1">
-          バックエンドが起動しているか確認してください。
-        </p>
-        <button
-          type="button"
-          onClick={checkConnection}
-          className="mt-3 rounded-lg border border-border bg-card px-4 py-2 text-sm font-semibold text-text hover:bg-surface"
-        >
-          接続を確認
-        </button>
-        {checkResult && (
-          <p className="mt-2 text-sm text-label">{checkResult}</p>
-        )}
+        <div className="w-full max-w-app md:max-w-app-md space-y-4">
+          <p className="rounded-2xl border border-red/30 bg-red/10 px-4 py-3 text-sm text-red">
+            {error}
+          </p>
+          <p className="text-sm text-muted">
+            使用中の API: <code className="text-label">{API_BASE}</code>
+          </p>
+          <p className="text-sm text-muted">
+            バックエンドが起動しているか確認してください。
+          </p>
+          <button
+            type="button"
+            onClick={checkConnection}
+            className="rounded-2xl border border-border bg-card px-4 py-3 text-sm font-semibold text-text transition hover:bg-surface"
+          >
+            接続を確認
+          </button>
+          {checkResult && (
+            <p className="text-sm text-label">{checkResult}</p>
+          )}
           <Link href="/" className="text-accent mt-4 inline-block font-semibold hover:underline">
             ← トップへ戻る
           </Link>

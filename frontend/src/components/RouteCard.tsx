@@ -51,13 +51,13 @@ export function RouteCard({
 
   return (
     <div
-      className={`rounded-card border bg-card p-4 shadow-card transition-all ${
+      className={`rounded-2xl border border-border bg-card p-4 shadow-card transition-all ${
         selected ? "border-accent shadow-glow" : "border-border"
       }`}
     >
       <div className="mb-3 flex items-center justify-between">
         <div className="flex flex-wrap items-center gap-2">
-          <span className="rounded-lg bg-accentDim px-2.5 py-1 text-xs font-semibold text-accent">
+          <span className="rounded-2xl bg-accentDim px-2.5 py-1 text-xs font-semibold text-accent">
             ルート {idx + 1}
           </span>
           {selSeg && (
@@ -82,16 +82,16 @@ export function RouteCard({
           placeholder="出発地（例：筑波大学）"
           value={route.origin}
           onChange={(val) => onUpdate(route.id, "origin", val)}
-          className="w-full rounded-[10px] border border-border bg-inputBg px-3 py-2.5 text-sm text-text transition-colors placeholder:text-muted focus:border-accent"
+          className="w-full rounded-2xl border border-border bg-inputBg px-4 py-3 text-sm text-text outline-none transition placeholder:text-muted focus:border-accent"
         />
         <PlaceInput
           placeholder="目的地（例：東京駅）"
           value={route.destination}
           onChange={(val) => onUpdate(route.id, "destination", val)}
-          className="w-full rounded-[10px] border border-border bg-inputBg px-3 py-2.5 text-sm text-text transition-colors placeholder:text-muted focus:border-accent"
+          className="w-full rounded-2xl border border-border bg-inputBg px-4 py-3 text-sm text-text outline-none transition placeholder:text-muted focus:border-accent"
         />
         <div className="flex items-center gap-3">
-          <span className="text-xs font-medium text-label">⏰ 出発時刻</span>
+          <span className="text-sm font-medium text-label">⏰ 出発時刻</span>
           <input
             type="time"
             value={departureTime}
@@ -102,7 +102,7 @@ export function RouteCard({
                 `${dayDate}T${e.target.value}:00+09:00`
               )
             }
-            className="w-[120px] rounded-[10px] border border-border bg-inputBg px-3 py-2.5 text-sm text-text transition-colors focus:border-accent"
+            className="w-[120px] rounded-2xl border border-border bg-inputBg px-4 py-3 text-sm text-text outline-none transition focus:border-accent"
           />
         </div>
       </div>

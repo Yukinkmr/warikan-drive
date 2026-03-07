@@ -78,7 +78,7 @@ export function DayBlock({
       <button
         type="button"
         onClick={onAddRoute}
-        className="mt-3 flex w-full items-center justify-center gap-2 rounded-[10px] border-2 border-dashed border-border bg-transparent py-3 text-sm font-medium text-muted transition-colors hover:border-accent hover:text-accent hover:bg-accentDim/20"
+        className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-border bg-transparent py-3 text-sm font-medium text-muted transition-colors hover:border-accent hover:text-accent hover:bg-accentDim/20"
       >
         <span>＋</span>
         ルートを追加

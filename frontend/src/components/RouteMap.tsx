@@ -182,7 +182,7 @@ export function RouteMap({
               key={seg.id}
               type="button"
               onClick={() => onSelect(seg.id)}
-              className={`flex w-full items-center gap-3 rounded-[10px] border p-3 text-left transition-all ${
+              className={`flex w-full items-center gap-3 rounded-2xl border p-3 text-left transition-all ${
                 isSelected
                   ? "border-accent bg-accentDim shadow-glow"
                   : "border-border bg-surface hover:border-label/50"

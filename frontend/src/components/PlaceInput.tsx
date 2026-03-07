@@ -145,7 +145,7 @@ export function PlaceInput({
       {open && predictions.length > 0 && (
         <ul
           role="listbox"
-          className="absolute left-0 right-0 top-full z-50 mt-1 max-h-60 overflow-auto rounded-[10px] border border-border bg-card py-1 shadow-lg"
+          className="absolute left-0 right-0 top-full z-50 mt-1 max-h-60 overflow-auto rounded-2xl border border-border bg-card py-1 shadow-lg"
         >
           {predictions.map((pred, idx) => (
             <li

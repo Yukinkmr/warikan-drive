@@ -296,8 +296,13 @@ export default function HomePage() {
         <main className="p-4 pb-8 sm:p-5 md:p-6 md:pb-10 lg:p-8">
           <div className="mb-5 flex items-center justify-between gap-3">
             <div>
-              <h2 className="text-lg font-semibold text-text">Your trips</h2>
-              <p className="text-sm text-muted">
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted">
+                Trips
+              </p>
+              <h2 className="mt-1.5 text-lg font-bold tracking-tight text-text sm:text-xl">
+                Your trips
+              </h2>
+              <p className="mt-1 text-sm text-muted">
                 この一覧と中の履歴は、現在ログイン中のユーザーだけに紐づきます。
               </p>
             </div>
@@ -318,11 +323,11 @@ export default function HomePage() {
           )}
 
           {loadingTrips ? (
-            <div className="rounded-card border border-border bg-card px-4 py-8 text-center text-sm text-muted">
+            <div className="rounded-2xl border border-border bg-card px-4 py-8 text-center text-sm text-muted">
               読み込み中…
             </div>
           ) : trips.length === 0 ? (
-            <div className="rounded-card border border-border bg-card px-4 py-8 text-center">
+            <div className="rounded-2xl border border-border bg-card px-4 py-8 text-center">
               <p className="text-sm text-muted">まだ旅行がありません。</p>
               <p className="mt-1 text-sm text-muted">
                 「＋ 新しい旅行」から自分用の履歴を作成できます。
@@ -334,7 +339,7 @@ export default function HomePage() {
                 <Link
                   key={trip.id}
                   href={`/trips/${trip.id}`}
-                  className="block rounded-card border border-border bg-card px-4 py-4 transition hover:border-accent/50 hover:bg-surface"
+                  className="block rounded-2xl border border-border bg-card px-4 py-4 transition hover:border-accent/50 hover:bg-surface"
                 >
                   <div className="flex items-center justify-between gap-3">
                     <div className="min-w-0">

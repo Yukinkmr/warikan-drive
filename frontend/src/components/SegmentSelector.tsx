@@ -25,7 +25,7 @@ export function SegmentSelector({
             key={s.id}
             type="button"
             onClick={() => onSelect(s.id)}
-            className={`w-full rounded-[10px] border p-3.5 text-left transition-all ${
+            className={`w-full rounded-2xl border p-3.5 text-left transition-all ${
               sel
                 ? "border-accent bg-accentDim shadow-glow"
                 : "border-border bg-surface hover:border-label/50"

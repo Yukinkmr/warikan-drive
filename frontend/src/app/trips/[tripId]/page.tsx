@@ -399,11 +399,14 @@ export default function TripDetailPage() {
             <ThemeToggle />
           </div>
           <div className="mt-4 flex items-center gap-3 sm:mt-5">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/10 text-xl sm:h-11 sm:w-11 md:h-12 md:w-12 md:text-2xl">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-white/10 text-xl sm:h-11 sm:w-11 md:h-12 md:w-12 md:text-2xl">
               🚗
             </div>
             <div className="min-w-0 flex-1">
-              <h1 className="truncate text-xl font-bold tracking-tight text-white sm:text-2xl md:text-[1.65rem]">
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/55">
+                Trip
+              </p>
+              <h1 className="mt-1 truncate text-xl font-bold tracking-tight text-white sm:text-2xl md:text-[1.65rem]">
                 {trip.name}
               </h1>
               <p className="mt-0.5 text-xs text-white/70 sm:text-sm">ルート管理</p>
@@ -484,7 +487,7 @@ export default function TripDetailPage() {
               type="date"
               value={dateInput}
               onChange={(e) => setDateInput(e.target.value)}
-              className="flex-1 rounded-[10px] border border-border bg-inputBg px-3 py-2.5 text-sm text-text transition-colors focus:border-accent"
+              className="flex-1 rounded-2xl border border-border bg-inputBg px-4 py-3 text-sm text-text outline-none transition focus:border-accent"
             />
             <Button onClick={addDay} variant="primary" className="shrink-0">
               追加
