@@ -29,7 +29,7 @@ export default function NewTripPage() {
     (async () => {
       try {
         const trip = await tripsApi.create({
-          name: "新しい旅行",
+          name: "新しいプラン",
           payment_method: "ETC",
           fuel_efficiency: 15,
           gas_price: 170,

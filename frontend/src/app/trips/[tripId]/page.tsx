@@ -107,7 +107,7 @@ export default function TripDetailPage({ params }: PageProps) {
   useEffect(() => {
     if (!user || !tripId || !trip) return;
     loadDays();
-    // trip?.id で「どの旅行か」を追跡しており、trip オブジェクト全体は意図的に省略
+    // trip?.id で「どのプランか」を追跡しており、trip オブジェクト全体は意図的に省略
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, tripId, trip?.id, loadDays]);
 
@@ -400,7 +400,7 @@ export default function TripDetailPage({ params }: PageProps) {
             <p className="text-muted">読み込み中…</p>
           ) : (
             <div>
-              <p className="text-muted">旅行が見つかりません</p>
+              <p className="text-muted">プランが見つかりません</p>
               <Link href="/" className="text-accent mt-2 inline-block hover:underline">
                 トップへ
               </Link>
