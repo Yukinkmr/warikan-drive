@@ -3,12 +3,15 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { setOptions, importLibrary } from "@googlemaps/js-api-loader";
 
+const hasMapsKey = () =>
+  Boolean(typeof process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY === "string" && process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY?.trim());
+
 // API オプションは一度だけ設定（RouteMap.tsx と共有）
 let apiOptionsSet = false;
 function ensureApiOptions() {
-  if (!apiOptionsSet) {
+  if (!apiOptionsSet && hasMapsKey()) {
     setOptions({
-      key: process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY ?? "",
+      key: process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY!.trim(),
       v: "weekly",
       language: "ja",
       region: "JP",
@@ -23,6 +26,7 @@ let placesLoaded = false;
 let placesLoadingPromise: Promise<void> | null = null;
 
 function loadPlaces(): Promise<void> {
+  if (!hasMapsKey()) return Promise.resolve(); // API キー未設定時はオートコンプリートなし（手入力のみ）
   if (placesLoaded) return Promise.resolve();
   if (placesLoadingPromise) return placesLoadingPromise;
   ensureApiOptions();

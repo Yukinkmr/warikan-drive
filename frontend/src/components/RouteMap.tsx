@@ -6,12 +6,15 @@ import type { RouteSegment } from "@/types";
 import type { PaymentMethod } from "@/types";
 import { formatYen } from "@/lib/utils";
 
+const hasMapsKey = () =>
+  Boolean(typeof process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY === "string" && process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY?.trim());
+
 // 新しい関数型API: setOptions は一度だけ呼ぶ
 let apiOptionsSet = false;
 function ensureApiOptions() {
-  if (!apiOptionsSet) {
+  if (!apiOptionsSet && hasMapsKey()) {
     setOptions({
-      key: process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY ?? "",
+      key: process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY!.trim(),
       v: "weekly",
       language: "ja",
       region: "JP",
@@ -55,9 +58,14 @@ export function RouteMap({
 
   // --- Maps JS API ロード ---
   useEffect(() => {
+    if (!hasMapsKey()) {
+      setLoadError(
+        "Google Maps API キーが設定されていません。.env に NEXT_PUBLIC_GOOGLE_MAPS_KEY を設定し、Maps JavaScript API を有効にしてください。"
+      );
+      return;
+    }
     let cancelled = false;
     ensureApiOptions();
-    // maps と geometry を並列ロード
     Promise.all([importLibrary("maps"), importLibrary("geometry")])
       .then(() => { if (!cancelled) setIsLoaded(true); })
       .catch((e: unknown) => { if (!cancelled) setLoadError(String(e)); });
@@ -155,8 +163,8 @@ export function RouteMap({
       <div className="relative overflow-hidden rounded-xl border border-border" style={{ height: 360 }}>
         <div ref={mapDivRef} style={{ width: "100%", height: "100%" }} />
         {loadError && (
-          <div className="absolute inset-0 flex items-center justify-center bg-surface/80 text-xs text-red-500">
-            地図の読み込みに失敗しました
+          <div className="absolute inset-0 flex items-center justify-center bg-surface/95 p-4 text-center text-sm text-red">
+            {loadError}
           </div>
         )}
         {!isLoaded && !loadError && (

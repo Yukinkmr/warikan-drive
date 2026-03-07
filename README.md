@@ -119,8 +119,9 @@ cp .env.example .env
 
 - **DATABASE_URL（必須）**  
   Supabase でプロジェクトを作成し、ダッシュボードの **Connect** から接続文字列（URI）をコピーして `DATABASE_URL` に貼り付けます。初回のみ Supabase の **SQL Editor** で `db/init.sql` を実行してテーブルを作成してください。
-- **Google Maps 経路・料金を使う場合**  
-  `GOOGLE_MAPS_API_KEY` に API キーを設定してください。未設定の場合はモックで動作します。
+- **Google Maps 経路・料金・地図表示を使う場合**  
+  - バックエンド（経路検索）: `.env` の `GOOGLE_MAPS_API_KEY` を設定。未設定時はモックで動作します。
+  - フロントエンド（地図・住所オートコンプリート）: `.env` に `NEXT_PUBLIC_GOOGLE_MAPS_KEY` を同じ API キーで設定してください。未設定の場合は地図は「API キー未設定」と表示され、住所は手入力のみになります。[Maps JavaScript API](https://developers.google.com/maps/documentation/javascript/get-api-key) を有効にしたキーが必要です。
 
 ### 3. Docker で起動
 
