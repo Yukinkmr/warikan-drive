@@ -30,13 +30,13 @@
 
 | レイヤー | 技術 |
 |----------|------|
-| フロントエンド | Next.js 16 (App Router) + React 19 + TypeScript |
+| フロントエンド | Next.js 16 (App Router) + React 18 + TypeScript |
 | スタイリング | Tailwind CSS |
 | バックエンド | FastAPI (Python 3.11) + Pydantic v2 |
 | ORM | SQLAlchemy |
 | データベース | PostgreSQL 16 |
 | 外部API | Google Maps Routes API |
-| 環境 | Docker / docker-compose |
+| 環境 | Docker / docker-compose（開発時は override でホットリロード） |
 | フロントデプロイ | Vercel（想定） |
 | バックデプロイ | Render（想定） |
 
@@ -45,9 +45,10 @@
 ## フォルダ構成
 
 ```
-DriveSplit/
+warikan-drive/
 ├── README.md
 ├── docker-compose.yml
+├── docker-compose.override.yml   # 開発用（コードマウント・ホットリロード）
 ├── .env.example
 ├── .gitignore
 │
@@ -55,7 +56,8 @@ DriveSplit/
 │   └── init.sql                 # DB初期化（テーブル・ENUM・デフォルトユーザー）
 │
 ├── frontend/                     # Next.js
-│   ├── Dockerfile
+│   ├── Dockerfile                # 本番ビルド用
+│   ├── Dockerfile.dev            # 開発用（npm run dev）
 │   ├── package.json
 │   ├── package-lock.json         # npm install で生成（再現ビルド用）
 │   ├── tailwind.config.ts
@@ -133,7 +135,7 @@ docker compose up --build
 
 コード変更のたびにイメージを再ビルドする必要はありません。初回のみ `--build` でビルドし、2回目以降は `docker compose up` だけでOKです。`package.json` や `requirements.txt` を変更したときだけ再ビルド（`docker compose up --build`）してください。
 
-初回はイメージのビルドと DB 初期化で数分かかることがあります。
+初回はイメージのビルドと DB 初期化に少し時間がかかります。開発時はフロントエンドの初回起動でコンテナ内の `npm install` が走るため、1〜2 分待つことがあります。ログに `Ready in` や `Local: http://localhost:3000` が出れば準備完了です。
 
 ### 4. ブラウザで開く
 
@@ -142,8 +144,10 @@ docker compose up --build
 | サービス | URL |
 |----------|-----|
 | **フロントエンド（アプリ）** | **http://localhost:3000** |
-| バックエンド API（Swagger） | http://localhost:8000/docs |
-| バックエンド API（ReDoc） | http://localhost:8000/redoc |
+| バックエンド API（Swagger） | http://localhost:8001/docs |
+| バックエンド API（ReDoc） | http://localhost:8001/redoc |
+
+※ バックエンドはコンテナ内 8000 をホストの **8001** にマッピングしています。
 
 **http://localhost:3000** を開くと「割り勘ドライブ」のトップ（旅行一覧）が表示されます。
 
@@ -175,11 +179,12 @@ docker compose down -v
 
 - **API キー**  
   Google Maps Routes API のキーは [Google Cloud Console](https://console.cloud.google.com/) でプロジェクトを作成し、Routes API を有効化して取得します。
-- **フロントエンドの Docker ビルド**  
-  フロントエンドの Dockerfile では `npm install` を使用しているため、`package-lock.json` がなくても `docker compose up --build` でビルドできます。再現性を高めたい場合は、事前に `cd frontend && npm install` を実行して `package-lock.json` を生成・コミットしたうえで、Dockerfile の `npm install` を `npm ci` に戻すとよいです。
+- **開発用と本番用の Docker**  
+  - **開発時**: `docker-compose.override.yml` が自動でマージされ、フロントは `Dockerfile.dev` で起動します。イメージビルドでは `npm install` は行わず、コンテナ起動時に `npm install && npm run dev` を実行するため、イメージビルドは短時間で完了します。`node_modules` は名前付きボリュームで永続化されます。
+  - **本番ビルド**: `docker-compose.yml` のみで起動する場合は `frontend/Dockerfile` が使われ、マルチステージビルドで `npm run build` した結果を配信します。`package.json` や `requirements.txt` を変更したあとは `docker compose up --build` で再ビルドしてください。
 - **Node.js バージョン**  
-  フロントエンド（Next.js 16）は Node.js 20.9 以上を想定しています。Docker では node:20-alpine を使用しています。
+  フロントエンド（Next.js 16）は Node.js 20 以上を想定しています。Docker では node:20-alpine を使用しています。
 - **バックエンド単体**  
-  DB だけ Docker で動かし、バックエンドを手元で実行する場合は、`.env` の `DATABASE_URL` を `postgresql://postgres:postgres@localhost:5432/warikan_drive` にし、`docker compose up db -d` のあと `cd backend && uvicorn main:app --reload` で起動できます。
+  DB だけ Docker で動かし、バックエンドを手元で実行する場合は、`.env` の `DATABASE_URL` を `postgresql://postgres:postgres@localhost:5432/warikan_drive` にし、`docker compose up db -d` のあと `cd backend && uvicorn main:app --reload` で起動できます。API は http://localhost:8000 でアクセスできます（compose では 8001 にマッピング）。
 - **フロントエンド単体**  
-  `cd frontend && npm install && npm run dev` で http://localhost:3000 で起動できます。バックエンドは別途起動し、`NEXT_PUBLIC_API_BASE_URL` をその URL に合わせてください。
+  `cd frontend && npm install && npm run dev` で http://localhost:3000 で起動できます。バックエンドは別途起動し、`NEXT_PUBLIC_API_BASE_URL` をバックエンドの URL（例: `http://localhost:8001/api/v1`）に合わせてください。
