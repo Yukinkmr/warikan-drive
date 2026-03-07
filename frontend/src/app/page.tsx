@@ -604,32 +604,13 @@ export default function HomePage() {
                 >
                   <div className="min-w-0 flex-1">
                     {editingTripId === trip.id ? (
-                      <div className="flex flex-wrap items-center gap-2">
-                        <input
-                          type="text"
-                          value={editingName}
-                          onChange={(e) => setEditingName(e.target.value)}
-                          className="min-w-0 flex-1 rounded-2xl border border-border bg-inputBg px-3 py-2 text-sm text-text outline-none focus:border-accent"
-                          autoFocus
-                        />
-                        <button
-                          type="button"
-                          onClick={() => handleSaveTripName(trip.id)}
-                          className="rounded-2xl bg-accent px-3 py-2 text-sm font-semibold text-white hover:opacity-90"
-                        >
-                          保存
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setEditingTripId(null);
-                            setEditingName("");
-                          }}
-                          className="rounded-2xl border border-border px-3 py-2 text-sm font-medium text-label hover:bg-border/50"
-                        >
-                          キャンセル
-                        </button>
-                      </div>
+                      <input
+                        type="text"
+                        value={editingName}
+                        onChange={(e) => setEditingName(e.target.value)}
+                        className="w-full rounded-2xl border border-border bg-inputBg px-3 py-2 text-sm text-text outline-none focus:border-accent"
+                        autoFocus
+                      />
                     ) : (
                       <>
                         <p className="truncate text-base font-semibold text-text">
@@ -642,27 +623,45 @@ export default function HomePage() {
                     )}
                   </div>
                   <div className="flex shrink-0 items-center gap-2">
-                    {editingTripId !== trip.id && (
+                    {editingTripId === trip.id ? (
                       <>
                         <button
                           type="button"
-                          onClick={() => {
-                            setEditingTripId(trip.id);
-                            setEditingName(trip.name);
-                          }}
-                          className="rounded-2xl border border-border bg-surface px-3 py-2 text-xs font-medium text-label transition hover:bg-border/50"
+                          onClick={() => handleSaveTripName(trip.id)}
+                          className="rounded-2xl bg-accent px-3 py-2 text-xs font-semibold text-white transition hover:opacity-90"
                         >
-                          名前の変更
+                          保存
                         </button>
                         <button
                           type="button"
-                          onClick={() => handleDeleteTrip(trip.id, trip.name)}
-                          className="rounded-2xl border border-red/30 bg-red/10 px-3 py-2 text-xs font-medium text-red transition hover:bg-red/20"
+                          onClick={() => {
+                            setEditingTripId(null);
+                            setEditingName("");
+                          }}
+                          className="rounded-2xl border border-border bg-surface px-3 py-2 text-xs font-medium text-label transition hover:bg-border/50"
                         >
-                          削除
+                          キャンセル
                         </button>
                       </>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setEditingTripId(trip.id);
+                          setEditingName(trip.name);
+                        }}
+                        className="rounded-2xl border border-border bg-surface px-3 py-2 text-xs font-medium text-label transition hover:bg-border/50"
+                      >
+                        名前の変更
+                      </button>
                     )}
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteTrip(trip.id, trip.name)}
+                      className="rounded-2xl border border-red/30 bg-red/10 px-3 py-2 text-xs font-medium text-red transition hover:bg-red/20"
+                    >
+                      削除
+                    </button>
                     <Link
                       href={`/trips/${trip.id}`}
                       className="rounded-2xl bg-accent px-3 py-2 text-xs font-semibold text-white transition hover:opacity-90"
