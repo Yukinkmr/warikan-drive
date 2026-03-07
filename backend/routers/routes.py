@@ -83,6 +83,8 @@ def delete_route(
     route = db.query(Route).filter(Route.id == route_id, Route.day_id == day_id).first()
     if not route:
         raise HTTPException(status_code=404, detail="Route not found")
+    route.selected_segment_id = None
+    db.flush()
     db.delete(route)
     db.commit()
     return None
@@ -103,6 +105,8 @@ def search_route(
         payment_method=body.payment_method,
     )
     # 既存の segment を削除して新規保存
+    route.selected_segment_id = None
+    db.flush()
     db.query(RouteSegment).filter(RouteSegment.route_id == route_id).delete()
     first = True
     for s in segments_data:

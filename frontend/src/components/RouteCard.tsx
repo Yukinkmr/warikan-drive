@@ -31,12 +31,13 @@ export function RouteCard({
   dayDate: string;
   onUpdate: (routeId: string, field: string, value: string) => void;
   onRemove: (() => void) | null;
-  onSearch: () => void;
+  onSearch: () => void | Promise<void>;
   onSelectSeg: (segmentId: string) => void;
   selected: boolean;
   onToggle: () => void;
 }) {
   const [open, setOpen] = useState(false);
+  const [hasSearched, setHasSearched] = useState(false);
   const selSeg = segments.find((s) => s.id === route.selected_segment_id);
   const toll = selSeg
     ? payment === "ETC"
@@ -48,6 +49,12 @@ export function RouteCard({
     route.departure_time != null
       ? new Date(route.departure_time).toTimeString().slice(0, 5)
       : "09:00";
+
+  async function handleSearch() {
+    await Promise.resolve(onSearch());
+    setHasSearched(true);
+    setOpen(true);
+  }
 
   return (
     <div
@@ -108,21 +115,25 @@ export function RouteCard({
       </div>
       <div className="mt-3 flex flex-wrap gap-2">
         <Button
-          onClick={onSearch}
+          onClick={handleSearch}
           disabled={!route.origin || !route.destination || loading}
           variant="ghost"
-          className="flex-1 text-xs"
+          className="flex-1 text-xs hover:!border-accent hover:!bg-accentDim hover:text-white active:!border-accent active:text-white active:shadow-glow"
         >
           {loading
             ? "検索中…"
-            : segments.length > 0
+            : hasSearched
               ? "🔄 再検索"
               : "🔍 経路を検索"}
         </Button>
         <Button
         onClick={() => setOpen((o) => !o)}
         variant="ghost"
-        className="flex-1 text-xs"
+        className={`flex-1 text-xs ${
+          open
+            ? "text-white shadow-glow hover:bg-accentDim hover:!border-accent hover:text-white hover:shadow-glow"
+            : "hover:bg-accentDim hover:text-white hover:shadow-glow hover:!border-accent"
+        }`}
         disabled={segments.length === 0}
         >
         {open ? "▲ 閉じる" : "▼ 経路を選ぶ"}
@@ -130,7 +141,11 @@ export function RouteCard({
         <Button
         onClick={onToggle}
         variant="ghost"
-        className={`flex-1 text-xs ${selected ? "border-accent text-accent" : ""}`}
+        className={`flex-1 text-xs ${
+          selected
+            ? "!border-green !bg-green text-white shadow-glow hover:!border-green hover:!bg-green hover:text-white hover:shadow-glow"
+            : "hover:bg-greenDim hover:text-white hover:border-green hover:shadow-glow"
+        }`}
         disabled={segments.length === 0}
         >
         {selected ? "✓ 含む" : "割り勘に含む"}
@@ -147,6 +162,7 @@ export function RouteCard({
           segments={segments}
           selectedId={route.selected_segment_id}
           payment={payment}
+          loading={loading}
           onSelect={(id) => {
             onSelectSeg(id);
           }}

@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { setOptions, importLibrary } from "@googlemaps/js-api-loader";
 import type { RouteSegment } from "@/types";
 import type { PaymentMethod } from "@/types";
+import { useTheme } from "@/contexts/ThemeContext";
 import { formatYen } from "@/lib/utils";
 
 const hasMapsKey = () =>
@@ -36,6 +37,7 @@ interface RouteMapProps {
   segments: RouteSegment[];
   selectedId: string | null;
   payment: PaymentMethod;
+  loading?: boolean;
   onSelect: (id: string) => void;
 }
 
@@ -47,14 +49,21 @@ export function RouteMap({
   segments,
   selectedId,
   payment,
+  loading = false,
   onSelect,
 }: RouteMapProps) {
+  const { dark } = useTheme();
   const mapDivRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<google.maps.Map | null>(null);
   const polylinesRef = useRef<Map<string, google.maps.Polyline>>(new Map());
   const markersRef = useRef<google.maps.Marker[]>([]);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [pendingSelectedId, setPendingSelectedId] = useState<string | null>(null);
+
+  const isSwitchingRoute =
+    pendingSelectedId != null && pendingSelectedId !== selectedId;
+  const isBusy = isSwitchingRoute || loading;
 
   // --- Maps JS API ロード ---
   useEffect(() => {
@@ -71,6 +80,18 @@ export function RouteMap({
       .catch((e: unknown) => { if (!cancelled) setLoadError(String(e)); });
     return () => { cancelled = true; };
   }, []);
+
+  useEffect(() => {
+    if (pendingSelectedId != null && pendingSelectedId === selectedId) {
+      setPendingSelectedId(null);
+    }
+  }, [pendingSelectedId, selectedId]);
+
+  function handleSelectRoute(id: string) {
+    if (id === selectedId) return;
+    setPendingSelectedId(id);
+    onSelect(id);
+  }
 
   // --- Map インスタンス作成 ---
   useEffect(() => {
@@ -120,7 +141,7 @@ export function RouteMap({
           strokeColor: color, strokeWeight: isSelected ? 7 : 4,
           strokeOpacity: isSelected ? 1 : 0.45, zIndex: isSelected ? 10 : 1,
         });
-        poly.addListener("click", () => onSelect(seg.id));
+        poly.addListener("click", () => handleSelectRoute(seg.id));
         existing.set(seg.id, poly);
       }
       if (isSelected) { path.forEach((ll) => bounds.extend(ll)); hasBounds = true; }
@@ -161,7 +182,11 @@ export function RouteMap({
     <div className="mt-3 flex flex-col gap-3">
       {/* ─── Google Map ─────────────────────────── */}
       <div className="relative overflow-hidden rounded-xl border border-border" style={{ height: 360 }}>
-        <div ref={mapDivRef} style={{ width: "100%", height: "100%" }} />
+        <div
+          ref={mapDivRef}
+          className={isBusy ? "blur-[2px] transition-all duration-200" : "transition-all duration-200"}
+          style={{ width: "100%", height: "100%" }}
+        />
         {loadError && (
           <div className="absolute inset-0 flex items-center justify-center bg-surface/95 p-4 text-center text-sm text-red">
             {loadError}
@@ -177,6 +202,17 @@ export function RouteMap({
             再検索するとルートが表示されます
           </div>
         )}
+        {isLoaded && isBusy && !loadError && (
+          <div
+            className={`absolute inset-0 flex items-center justify-center backdrop-blur-sm ${
+              dark ? "bg-black/50" : "bg-white/50"
+            }`}
+          >
+            <div className="text-lg text-text sm:text-xl">
+              {loading ? "再検索中…" : "ルートを切替中…"}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* ─── ルート選択リスト ───────────────────── */}
@@ -189,7 +225,7 @@ export function RouteMap({
             <button
               key={seg.id}
               type="button"
-              onClick={() => onSelect(seg.id)}
+              onClick={() => handleSelectRoute(seg.id)}
               className={`flex w-full items-center gap-3 rounded-2xl border p-3 text-left transition-all ${
                 isSelected
                   ? "border-accent bg-accentDim shadow-glow"

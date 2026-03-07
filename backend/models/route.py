@@ -62,4 +62,5 @@ class Route(Base):
     selected_segment = relationship(
         "RouteSegment",
         foreign_keys=[selected_segment_id],
+        post_update=True,
     )
