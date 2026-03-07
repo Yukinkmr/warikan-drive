@@ -41,7 +41,12 @@ export default function HomePage() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newTripName, setNewTripName] = useState("");
   const [editingTripId, setEditingTripId] = useState<string | null>(null);
+  const [popupClosing, setPopupClosing] = useState(false);
+  const [popupSaving, setPopupSaving] = useState(false);
+  const [renamingTripId, setRenamingTripId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState("");
+  const [deleteConfirmingTripId, setDeleteConfirmingTripId] = useState<string | null>(null);
+  const [deletingTripId, setDeletingTripId] = useState<string | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [filterKeyword, setFilterKeyword] = useState("");
   const [filterDate, setFilterDate] = useState("");
@@ -154,27 +159,34 @@ export default function HomePage() {
   const handleSaveTripName = async (tripId: string) => {
     const name = editingName.trim();
     if (!name) {
-      setEditingTripId(null);
+      setRenamingTripId(null);
       return;
     }
+    setPopupSaving(true);
     try {
       await tripsApi.update(tripId, { name });
       setTrips((prev) =>
         prev.map((t) => (t.id === tripId ? { ...t, name } : t))
       );
-      setEditingTripId(null);
+      setRenamingTripId(null);
+      setPopupSaving(false);
+      setPopupClosing(true);
     } catch {
-      // 失敗時は編集状態のまま
+      setPopupSaving(false);
     }
   };
 
-  const handleDeleteTrip = async (tripId: string, tripName: string) => {
-    if (!window.confirm(`「${tripName}」を削除しますか？`)) return;
+  const handleConfirmDeleteTrip = async (tripId: string) => {
+    setDeletingTripId(tripId);
     try {
       await tripsApi.delete(tripId);
       setTrips((prev) => prev.filter((t) => t.id !== tripId));
+      setDeleteConfirmingTripId(null);
+      if (editingTripId === tripId) setPopupClosing(true);
     } catch {
       // 失敗時は何もしない
+    } finally {
+      setDeletingTripId(null);
     }
   };
 
@@ -223,7 +235,7 @@ export default function HomePage() {
                   ログイン / 新規登録
                 </h1>
                 <p className="mt-2 text-sm" style={{ color: "var(--auth-body)" }}>
-                  ログインすると、自分の旅行履歴と割り勘データだけを表示します。
+                  ログインすると、自分のプラン履歴と割り勘データだけを表示します。
                 </p>
               </div>
               <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl text-3xl" style={{ background: "var(--auth-icon-bg)" }}>
@@ -397,30 +409,31 @@ export default function HomePage() {
   }
 
   return (
-    <div className="min-h-screen w-full min-w-0 bg-bg text-text md:flex md:justify-center">
-      <div className="mx-auto w-full min-w-0 max-w-app md:max-w-app-md lg:max-w-app-lg xl:max-w-app-xl">
+    <div className="flex h-screen w-full min-w-0 flex-col bg-bg text-text md:flex md:justify-center">
+      <div className="mx-auto flex min-h-0 w-full min-w-0 flex-1 flex-col max-w-app md:max-w-app-md lg:max-w-app-lg xl:max-w-app-xl">
         <header
-          className="border-b border-white/10 px-4 pt-5 pb-5 sm:px-5 sm:pt-6 md:px-6 lg:px-8 lg:pt-7"
+          className="shrink-0 border-b border-white/10 px-4 pt-5 pb-5 sm:px-5 sm:pt-6 md:px-6 lg:px-8 lg:pt-7"
           style={{ background: "var(--header-bg)" }}
         >
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/55">
-                Signed in
-              </p>
-              <h1 className="mt-2 text-2xl font-bold tracking-tight text-white sm:text-3xl">
-                {user.name} の旅行一覧
+          <div className="flex items-center justify-between gap-4">
+            <div className="min-w-0 flex-1">
+              <h1 className="text-lg font-bold tracking-tight text-white sm:text-xl">
+                <span className="whitespace-nowrap">{user.name}</span>
+                {" "}
+                <span className="whitespace-nowrap">のプラン一覧</span>
               </h1>
-              <p className="mt-1 text-sm text-white/70">{user.email}</p>
             </div>
-            <div className="flex flex-col items-end gap-2">
+            <div className="flex shrink-0 items-center gap-5 sm:gap-6">
+              <div className="flex items-center scale-75 origin-center sm:scale-90">
+                <ThemeToggle />
+              </div>
               <button
                 type="button"
                 onClick={() => setIsSettingsOpen(true)}
-                className="rounded-xl border border-white/15 p-2.5 text-white/80 transition-all duration-200 ease-out hover:scale-105 hover:border-white/30 hover:text-white active:scale-95"
+                className="rounded-lg border border-white/15 p-1.5 text-white/80 transition-all duration-200 ease-out hover:scale-105 hover:border-white/30 hover:text-white active:scale-95 sm:rounded-xl sm:p-2"
                 aria-label="設定"
               >
-                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="h-4 w-4 sm:h-5 sm:w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -430,7 +443,6 @@ export default function HomePage() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                 </svg>
               </button>
-              <ThemeToggle />
             </div>
             {isSettingsOpen && (
               <Settings
@@ -447,23 +459,7 @@ export default function HomePage() {
           </div>
         </header>
 
-        <main className="p-4 pb-8 sm:p-5 md:p-6 md:pb-10 lg:p-8">
-          <div className="mb-5 flex items-center justify-between gap-3">
-            <div>
-              <h2 className="text-lg font-bold tracking-tight text-text sm:text-xl">
-                TRIPS
-              </h2>
-            </div>
-            <button
-              type="button"
-              onClick={handleOpenCreateModal}
-              disabled={creating}
-              className="shrink-0 whitespace-nowrap rounded-2xl bg-accent px-4 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              {creating ? "作成中…" : "＋ 新しい旅行"}
-            </button>
-          </div>
-
+        <main className="flex min-h-0 flex-1 flex-col overflow-hidden p-4 pb-8 sm:p-5 md:p-6 md:pb-10 lg:p-8">
           {showCreateModal && (
             <div
               className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
@@ -532,35 +528,43 @@ export default function HomePage() {
               読み込み中…
             </div>
           ) : trips.length === 0 ? (
-            <div className="rounded-2xl border border-border bg-card px-4 py-8 text-center">
-              <p className="text-sm text-muted">まだ旅行がありません。</p>
-              <p className="mt-1 text-sm text-muted">
-                「＋ 新しい旅行」から自分用の履歴を作成できます。
-              </p>
-            </div>
-          ) : (
             <>
-              <div className="mb-4 flex min-w-0 flex-wrap items-center gap-3 rounded-2xl border border-border bg-card p-3 sm:p-4">
-                <div className="flex min-w-0 flex-1 flex-wrap items-center gap-3">
+              <button
+                type="button"
+                onClick={handleOpenCreateModal}
+                disabled={creating}
+                className="mb-4 shrink-0 whitespace-nowrap rounded-2xl bg-accent px-4 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {creating ? "作成中…" : "＋ 新しいドライブプラン"}
+              </button>
+              <div className="rounded-2xl border border-border bg-card px-4 py-8 text-center">
+                <p className="text-sm text-muted">まだプランがありません。</p>
+                <p className="mt-1 text-sm text-muted">
+                  「新しいドライブプラン」から自分用の履歴を作成できます。
+                </p>
+              </div>
+            </>
+          ) : (
+            <div className="flex min-h-0 flex-1 flex-col">
+              <div className="mb-4 shrink-0 flex min-w-0 flex-wrap items-center gap-2 rounded-2xl border border-border bg-card p-2 sm:p-3">
+                <input
+                  type="text"
+                  placeholder="キーワードで検索"
+                  value={filterKeyword}
+                  onChange={(e) => setFilterKeyword(e.target.value)}
+                  className="min-w-[11rem] flex-1 rounded-xl border border-border bg-inputBg px-3 py-1.5 text-sm text-text outline-none transition placeholder:text-muted focus:border-accent sm:max-w-[200px]"
+                />
+                <div className="flex shrink-0 items-center gap-2">
+                  <label htmlFor="filter-date" className="shrink-0 text-xs text-muted sm:text-sm">
+                    作成日:
+                  </label>
                   <input
-                    type="text"
-                    placeholder="キーワードで検索"
-                    value={filterKeyword}
-                    onChange={(e) => setFilterKeyword(e.target.value)}
-                    className="min-w-0 flex-1 rounded-2xl border border-border bg-inputBg px-4 py-2.5 text-sm text-text outline-none transition placeholder:text-muted focus:border-accent sm:max-w-[200px]"
+                    id="filter-date"
+                    type="date"
+                    value={filterDate}
+                    onChange={(e) => setFilterDate(e.target.value)}
+                    className="rounded-xl border border-border bg-inputBg px-3 py-1.5 text-sm text-text outline-none transition focus:border-accent"
                   />
-                  <div className="flex items-center gap-2">
-                    <label htmlFor="filter-date" className="shrink-0 text-sm text-muted">
-                      作成日:
-                    </label>
-                    <input
-                      id="filter-date"
-                      type="date"
-                      value={filterDate}
-                      onChange={(e) => setFilterDate(e.target.value)}
-                      className="rounded-2xl border border-border bg-inputBg px-4 py-2.5 text-sm text-text outline-none transition focus:border-accent"
-                    />
-                  </div>
                 </div>
                 {(filterKeyword.trim() || filterDate) && (
                   <button
@@ -569,15 +573,24 @@ export default function HomePage() {
                       setFilterKeyword("");
                       setFilterDate("");
                     }}
-                    className="shrink-0 rounded-2xl border border-border bg-surface px-3 py-2 text-xs font-medium text-label transition hover:bg-border/50"
+                    className="shrink-0 rounded-xl border border-border bg-surface px-2.5 py-1.5 text-xs font-medium text-label transition hover:bg-border/50"
                   >
                     クリア
                   </button>
                 )}
               </div>
+              <button
+                type="button"
+                onClick={handleOpenCreateModal}
+                disabled={creating}
+                className="mb-4 shrink-0 whitespace-nowrap rounded-2xl bg-accent px-4 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {creating ? "作成中…" : "＋ 新しいドライブプラン"}
+              </button>
+              <div className="min-h-0 flex-1">
               {filteredTrips.length === 0 ? (
                 <div className="rounded-2xl border border-border bg-card px-4 py-8 text-center">
-                  <p className="text-sm text-muted">条件に一致する旅行はありません。</p>
+                  <p className="text-sm text-muted">条件に一致するプランはありません。</p>
                   <button
                     type="button"
                     onClick={() => {
@@ -590,85 +603,212 @@ export default function HomePage() {
                   </button>
                 </div>
               ) : (
-            <div className="space-y-3">
+            <div className="h-full min-h-0 rounded-2xl border border-border bg-card p-2 sm:p-3 overflow-y-auto overflow-x-hidden">
+              <div className="space-y-2">
               {filteredTrips.map((trip) => (
                 <div
                   key={trip.id}
-                  className="flex items-center gap-3 rounded-2xl border border-border bg-card px-4 py-4 transition hover:border-accent/50 hover:bg-surface"
+                  className="flex flex-col gap-1.5 rounded-xl border border-border bg-card px-3 py-2 transition hover:border-accent/50 hover:bg-surface"
                 >
-                  <div className="min-w-0 flex-1">
-                    {editingTripId === trip.id ? (
+                  <p className="min-w-0 flex-1 truncate text-sm font-semibold text-text">
+                    {trip.name}
+                  </p>
+                  <div className="flex min-w-0 items-center justify-between gap-1.5">
+                    <p className="text-xs text-muted">
+                      {new Date(trip.created_at).toLocaleDateString("ja-JP")}
+                    </p>
+                    <div className="flex shrink-0 items-center gap-1 sm:gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => setEditingTripId(trip.id)}
+                        className="rounded-lg border border-border bg-surface px-2 py-1 text-[11px] font-medium text-label transition hover:bg-border/50 sm:rounded-xl sm:px-2.5 sm:py-1.5 sm:text-xs"
+                      >
+                        編集
+                      </button>
+                      <Link
+                        href={`/trips/${trip.id}`}
+                        className="rounded-lg bg-accent px-2 py-1 text-[11px] font-semibold text-white transition hover:opacity-90 sm:rounded-xl sm:px-2.5 sm:py-1.5 sm:text-xs"
+                      >
+                        開く →
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+              ))}
+              </div>
+            </div>
+              )}
+              </div>
+            </div>
+          )}
+
+          {(editingTripId || popupClosing) && (() => {
+            const tripId = editingTripId ?? "";
+            const tripToEdit = trips.find((t) => t.id === tripId);
+            // 削除完了後は tripToEdit が無いが、閉じアニメーションのためポップアップは残す
+            if (!tripToEdit && !popupClosing) return null;
+            const isRenaming = renamingTripId === tripId;
+            const closePopup = () => {
+              if (!popupClosing) setPopupClosing(true);
+            };
+            const handlePopupAnimationEnd = (e: React.AnimationEvent) => {
+              if (e.animationName === "edit-popup-panel-exit" && popupClosing) {
+                setEditingTripId(null);
+                setPopupClosing(false);
+                setPopupSaving(false);
+                setRenamingTripId(null);
+                setEditingName("");
+                setDeleteConfirmingTripId(null);
+                setDeletingTripId(null);
+              }
+            };
+            // 削除完了後は閉じアニメーションのみ表示（中身は不要）
+            if (popupClosing && !tripToEdit) {
+              return (
+                <div
+                  className="edit-popup-overlay edit-popup-closing fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+                  role="dialog"
+                  aria-modal="true"
+                  aria-label="閉じる"
+                >
+                  <div
+                    className="edit-popup-panel edit-popup-closing w-full max-w-sm rounded-2xl border border-border bg-card p-5 shadow-lg"
+                    onAnimationEnd={handlePopupAnimationEnd}
+                  />
+                </div>
+              );
+            }
+            return (
+              <div
+                className={`edit-popup-overlay fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 ${popupClosing ? "edit-popup-closing" : ""}`}
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby={isRenaming ? "rename-trip-modal-title" : "edit-trip-modal-title"}
+                onClick={closePopup}
+              >
+                <div
+                  className={`edit-popup-panel w-full max-w-sm rounded-2xl border border-border bg-card p-5 shadow-lg ${popupClosing ? "edit-popup-closing" : ""}`}
+                  onClick={(e) => e.stopPropagation()}
+                  onAnimationEnd={handlePopupAnimationEnd}
+                >
+                  {isRenaming ? (
+                    <>
+                      <h3
+                        id="rename-trip-modal-title"
+                        className="text-sm font-semibold text-label"
+                      >
+                        名前を変更
+                      </h3>
                       <input
                         type="text"
                         value={editingName}
                         onChange={(e) => setEditingName(e.target.value)}
-                        className="w-full rounded-2xl border border-border bg-inputBg px-3 py-2 text-sm text-text outline-none focus:border-accent"
+                        className="mt-3 w-full rounded-2xl border border-border bg-inputBg px-4 py-3 text-sm text-text outline-none transition focus:border-accent"
+                        placeholder="プランの名前"
                         autoFocus
                       />
-                    ) : (
-                      <>
-                        <p className="truncate text-base font-semibold text-text">
-                          {trip.name}
-                        </p>
-                        <p className="mt-1 text-sm text-muted">
-                          作成日 {new Date(trip.created_at).toLocaleDateString("ja-JP")}
-                        </p>
-                      </>
-                    )}
-                  </div>
-                  <div className="flex shrink-0 items-center gap-2">
-                    {editingTripId === trip.id ? (
-                      <>
+                      <div className="mt-4 flex flex-col gap-2">
                         <button
                           type="button"
-                          onClick={() => handleSaveTripName(trip.id)}
-                          className="rounded-2xl bg-accent px-3 py-2 text-xs font-semibold text-white transition hover:opacity-90"
+                          onClick={() => handleSaveTripName(tripId)}
+                          disabled={popupSaving}
+                          className="flex items-center justify-center gap-2 rounded-2xl bg-accent px-4 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-70"
                         >
-                          保存
+                          {popupSaving && (
+                            <span
+                              className="h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-white/30 border-t-white"
+                              aria-hidden
+                            />
+                          )}
+                          {popupSaving ? "保存中…" : "保存"}
                         </button>
                         <button
                           type="button"
                           onClick={() => {
-                            setEditingTripId(null);
+                            setRenamingTripId(null);
                             setEditingName("");
                           }}
-                          className="rounded-2xl border border-border bg-surface px-3 py-2 text-xs font-medium text-label transition hover:bg-border/50"
+                          className="rounded-2xl border border-border bg-surface px-4 py-3 text-sm font-medium text-muted transition hover:bg-border/50"
                         >
                           キャンセル
                         </button>
+                      </div>
+                    </>
+                  ) : deletingTripId === tripId ? (
+                    <div className="flex flex-col items-center gap-4 py-2">
+                      <span
+                        className="h-8 w-8 shrink-0 animate-spin rounded-full border-2 border-accent/30 border-t-accent"
+                        aria-hidden
+                      />
+                      <p className="text-sm font-medium text-label">削除中…</p>
+                    </div>
+                  ) : deleteConfirmingTripId === tripId ? (
+                    <>
+                      <h3
+                        id="edit-trip-modal-title"
+                        className="text-sm font-semibold text-label"
+                      >
+                        本当に削除しますか？
+                      </h3>
+                      <div className="mt-4 flex flex-col gap-2">
                         <button
                           type="button"
-                          onClick={() => handleDeleteTrip(trip.id, trip.name)}
-                          className="rounded-2xl border border-red/30 bg-red/10 px-3 py-2 text-xs font-medium text-red transition hover:bg-red/20"
+                          onClick={() => handleConfirmDeleteTrip(tripId)}
+                          disabled={deletingTripId === tripId}
+                          className="flex items-center justify-center gap-2 rounded-2xl bg-red px-4 py-3 text-sm font-medium text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-70"
+                        >
+                          はい
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setDeleteConfirmingTripId(null)}
+                          disabled={deletingTripId === tripId}
+                          className="rounded-2xl border border-border bg-surface px-4 py-3 text-sm font-medium text-muted transition hover:bg-border/50 disabled:cursor-not-allowed disabled:opacity-70"
+                        >
+                          いいえ
+                        </button>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <h3
+                        id="edit-trip-modal-title"
+                        className="text-sm font-semibold text-label"
+                      >
+                        {tripToEdit.name}
+                      </h3>
+                      <div className="mt-4 flex flex-col gap-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setRenamingTripId(editingTripId);
+                            setEditingName(tripToEdit.name);
+                          }}
+                          className="rounded-2xl border border-border bg-surface px-4 py-3 text-sm font-medium text-label transition hover:bg-border/50"
+                        >
+                          名前を変更
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setDeleteConfirmingTripId(tripId)}
+                          className="rounded-2xl border border-red/30 bg-red/10 px-4 py-3 text-sm font-medium text-red transition hover:bg-red/20"
                         >
                           削除
                         </button>
-                      </>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setEditingTripId(trip.id);
-                          setEditingName(trip.name);
-                        }}
-                        className="rounded-2xl border border-border bg-surface px-3 py-2 text-xs font-medium text-label transition hover:bg-border/50"
-                      >
-                        編集
-                      </button>
-                    )}
-                    <Link
-                      href={`/trips/${trip.id}`}
-                      className="rounded-2xl bg-accent px-3 py-2 text-xs font-semibold text-white transition hover:opacity-90"
-                    >
-                      開く →
-                    </Link>
-                  </div>
+                        <button
+                          type="button"
+                          onClick={closePopup}
+                          className="rounded-2xl border border-border bg-surface px-4 py-3 text-sm font-medium text-muted transition hover:bg-border/50"
+                        >
+                          キャンセル
+                        </button>
+                      </div>
+                    </>
+                  )}
                 </div>
-              ))}
-            </div>
-              )}
-            </>
-          )}
+              </div>
+            );
+          })()}
         </main>
       </div>
     </div>

@@ -91,6 +91,10 @@
   --auth-shadow: 0 8px 32px rgba(15, 23, 42, 0.08);
 }
 
+[data-theme="light"] main {
+  background-color: #cbd5e1;
+}
+
 body {
   font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
   background: var(--bg);
@@ -149,13 +153,12 @@ input:focus:not(:focus-visible) {
   cursor: pointer;
 }
 
-.theme-switch__input:hover + .theme-switch__label,
-.theme-switch__input:focus + .theme-switch__label {
+/* ホバー時のみグレーに（:focus は含めない＝クリック後フォーカスが残ってもカーソルを離せば元に戻る） */
+.theme-switch__input:hover + .theme-switch__label {
   background-color: var(--label);
 }
 
-.theme-switch__input:hover + .theme-switch__label span::after,
-.theme-switch__input:focus + .theme-switch__label span::after {
+.theme-switch__input:hover + .theme-switch__label span::after {
   filter: brightness(1.1);
 }
 
@@ -191,6 +194,10 @@ input:focus:not(:focus-visible) {
   transform: translate3d(0, -50%, 0);
   color: var(--accent);
   transition: color 0.2s;
+}
+
+[data-theme="light"] .theme-switch__label::before {
+  color: #eab308; /* ライトモード時は太陽を黄色に */
 }
 
 /* 月アイコン（ラベルの右外側） */
@@ -243,4 +250,61 @@ input:focus:not(:focus-visible) {
 
 .theme-switch__input:checked + .theme-switch__label span::after {
   transform: translate3d(41px, 0, 0);
+}
+
+/* 編集ポップアップの開閉アニメーション */
+@keyframes edit-popup-overlay-enter {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes edit-popup-overlay-exit {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes edit-popup-panel-enter {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes edit-popup-panel-exit {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+}
+
+.edit-popup-overlay {
+  animation: edit-popup-overlay-enter 0.22s ease-out;
+}
+
+.edit-popup-overlay.edit-popup-closing {
+  animation: edit-popup-overlay-exit 0.18s ease-in forwards;
+}
+
+.edit-popup-panel {
+  animation: edit-popup-panel-enter 0.22s ease-out;
+}
+
+.edit-popup-panel.edit-popup-closing {
+  animation: edit-popup-panel-exit 0.18s ease-in forwards;
 }
