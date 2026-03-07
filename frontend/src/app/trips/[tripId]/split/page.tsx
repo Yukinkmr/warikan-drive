@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import {
   tripsApi,
   daysApi,
@@ -23,10 +23,13 @@ import { Card } from "@/components/ui/Card";
 import { Label } from "@/components/ui/Label";
 import { Button } from "@/components/ui/Button";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { useAuth } from "@/contexts/AuthContext";
 import { formatYen } from "@/lib/utils";
 
 export default function SplitPage() {
   const params = useParams();
+  const router = useRouter();
+  const { user, loading: authLoading } = useAuth();
   const tripId = params.tripId as string;
   const [trip, setTrip] = useState<Trip | null>(null);
   const [days, setDays] = useState<Day[]>([]);
@@ -98,8 +101,13 @@ export default function SplitPage() {
   }, [tripId]);
 
   useEffect(() => {
+    if (authLoading) return;
+    if (!user) {
+      router.replace("/");
+      return;
+    }
     loadTrip().then(() => setLoading(false));
-  }, [loadTrip]);
+  }, [authLoading, user, router, loadTrip]);
 
   useEffect(() => {
     if (!trip) return;
@@ -109,10 +117,10 @@ export default function SplitPage() {
   }, [trip]);
 
   useEffect(() => {
-    if (!tripId) return;
+    if (!user || !tripId) return;
     loadDaysAndRoutes();
     loadExtraCosts();
-  }, [tripId, loadDaysAndRoutes, loadExtraCosts]);
+  }, [user, tripId, loadDaysAndRoutes, loadExtraCosts]);
 
   const includedRoutes = days.flatMap((d) =>
     (routesByDayId[d.id] ?? []).filter(
@@ -169,6 +177,20 @@ export default function SplitPage() {
     },
     [tripId]
   );
+
+  if (authLoading || (!user && !trip)) {
+    return (
+      <div className="flex min-h-screen w-full items-center justify-center bg-bg p-4 text-text">
+        <div className="w-full max-w-app text-center md:max-w-app-md">
+          <p className="text-muted">読み込み中…</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return null;
+  }
 
   if (loading || !trip) {
     return (

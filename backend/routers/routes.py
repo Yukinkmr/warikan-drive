@@ -1,12 +1,11 @@
 from uuid import UUID
-from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
+from auth import get_current_user, get_day_for_user, get_route_for_user
 from database import get_db
-from models import Trip, Day, Route, RouteSegment
-from sqlalchemy.orm import joinedload
+from models import Route, RouteSegment, User
 from schemas.route import (
     RouteCreate,
     RouteUpdate,
@@ -21,23 +20,14 @@ from services.google_maps import search_route_segments
 router = APIRouter(tags=["routes"])
 
 
-def _get_day(day_id: UUID, db: Session) -> Day:
-    day = db.query(Day).filter(Day.id == day_id).first()
-    if not day:
-        raise HTTPException(status_code=404, detail="Day not found")
-    return day
-
-
-def _get_route(route_id: UUID, db: Session) -> Route:
-    route = db.query(Route).filter(Route.id == route_id).first()
-    if not route:
-        raise HTTPException(status_code=404, detail="Route not found")
-    return route
-
-
 @router.post("/days/{day_id}/routes", response_model=RouteResponse)
-def create_route(day_id: UUID, body: RouteCreate, db: Session = Depends(get_db)):
-    day = _get_day(day_id, db)
+def create_route(
+    day_id: UUID,
+    body: RouteCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    get_day_for_user(day_id, db, current_user)
     dep = body.departure_time
     route = Route(
         day_id=day_id,
@@ -53,17 +43,25 @@ def create_route(day_id: UUID, body: RouteCreate, db: Session = Depends(get_db))
 
 
 @router.get("/days/{day_id}/routes", response_model=list[RouteResponse])
-def list_routes(day_id: UUID, db: Session = Depends(get_db)):
-    _get_day(day_id, db)
+def list_routes(
+    day_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    get_day_for_user(day_id, db, current_user)
     routes = db.query(Route).filter(Route.day_id == day_id).order_by(Route.created_at).all()
     return routes
 
 
 @router.patch("/days/{day_id}/routes/{route_id}", response_model=RouteResponse)
 def update_route(
-    day_id: UUID, route_id: UUID, body: RouteUpdate, db: Session = Depends(get_db)
+    day_id: UUID,
+    route_id: UUID,
+    body: RouteUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
-    day = _get_day(day_id, db)
+    get_day_for_user(day_id, db, current_user)
     route = db.query(Route).filter(Route.id == route_id, Route.day_id == day_id).first()
     if not route:
         raise HTTPException(status_code=404, detail="Route not found")
@@ -75,8 +73,13 @@ def update_route(
 
 
 @router.delete("/days/{day_id}/routes/{route_id}", status_code=204)
-def delete_route(day_id: UUID, route_id: UUID, db: Session = Depends(get_db)):
-    _get_day(day_id, db)
+def delete_route(
+    day_id: UUID,
+    route_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    get_day_for_user(day_id, db, current_user)
     route = db.query(Route).filter(Route.id == route_id, Route.day_id == day_id).first()
     if not route:
         raise HTTPException(status_code=404, detail="Route not found")
@@ -86,8 +89,13 @@ def delete_route(day_id: UUID, route_id: UUID, db: Session = Depends(get_db)):
 
 
 @router.post("/routes/{route_id}/search", response_model=RouteSearchResponse)
-def search_route(route_id: UUID, body: RouteSearchRequest, db: Session = Depends(get_db)):
-    route = _get_route(route_id, db)
+def search_route(
+    route_id: UUID,
+    body: RouteSearchRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    route = get_route_for_user(route_id, db, current_user)
     segments_data = search_route_segments(
         origin=route.origin,
         destination=route.destination,
@@ -115,8 +123,12 @@ def search_route(route_id: UUID, body: RouteSearchRequest, db: Session = Depends
 
 
 @router.get("/routes/{route_id}/segments", response_model=RouteSearchResponse)
-def get_route_segments(route_id: UUID, db: Session = Depends(get_db)):
-    _get_route(route_id, db)
+def get_route_segments(
+    route_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    get_route_for_user(route_id, db, current_user)
     segments = db.query(RouteSegment).filter(RouteSegment.route_id == route_id).all()
     return RouteSearchResponse(
         segments=[RouteSegmentResponse.model_validate(s) for s in segments]
@@ -124,10 +136,13 @@ def get_route_segments(route_id: UUID, db: Session = Depends(get_db)):
 
 
 @router.patch("/routes/{route_id}/select", response_model=RouteResponse)
-def select_segment(route_id: UUID, body: RouteSelectRequest, db: Session = Depends(get_db)):
-    route = db.query(Route).options(joinedload(Route.day).joinedload(Day.trip)).filter(Route.id == route_id).first()
-    if not route:
-        raise HTTPException(status_code=404, detail="Route not found")
+def select_segment(
+    route_id: UUID,
+    body: RouteSelectRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    route = get_route_for_user(route_id, db, current_user)
     seg = db.query(RouteSegment).filter(
         RouteSegment.id == body.segment_id,
         RouteSegment.route_id == route_id,

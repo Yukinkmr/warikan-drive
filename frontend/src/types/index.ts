@@ -1,5 +1,17 @@
 export type PaymentMethod = "ETC" | "CASH";
 
+export interface AuthUser {
+  id: string;
+  name: string;
+  email: string;
+  created_at: string;
+}
+
+export interface AuthResponse {
+  token: string;
+  user: AuthUser;
+}
+
 export interface Trip {
   id: string;
   name: string;

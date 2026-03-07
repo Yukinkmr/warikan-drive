@@ -1,4 +1,5 @@
 from .trip import TripCreate, TripUpdate, TripResponse, TripListResponse
+from .auth import AuthResponse, AuthUserResponse, LoginRequest, RegisterRequest
 from .route import (
     RouteCreate,
     RouteUpdate,
@@ -16,6 +17,10 @@ __all__ = [
     "TripUpdate",
     "TripResponse",
     "TripListResponse",
+    "AuthResponse",
+    "AuthUserResponse",
+    "LoginRequest",
+    "RegisterRequest",
     "RouteCreate",
     "RouteUpdate",
     "RouteResponse",

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { tripsApi, daysApi, routesApi } from "@/lib/api";
 import type { Trip, Day, Route, RouteSegment } from "@/types";
 import type { PaymentMethod } from "@/types";
@@ -12,10 +12,13 @@ import { Label } from "@/components/ui/Label";
 import { Pill } from "@/components/ui/Pill";
 import { Button } from "@/components/ui/Button";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { useAuth } from "@/contexts/AuthContext";
 import { todayStr } from "@/lib/utils";
 
 export default function TripDetailPage() {
   const params = useParams();
+  const router = useRouter();
+  const { user, loading: authLoading } = useAuth();
   const tripId = params.tripId as string;
   const [trip, setTrip] = useState<Trip | null>(null);
   const [days, setDays] = useState<Day[]>([]);
@@ -77,14 +80,19 @@ export default function TripDetailPage() {
   }, [tripId]);
 
   useEffect(() => {
+    if (authLoading) return;
+    if (!user) {
+      router.replace("/");
+      return;
+    }
     if (!tripId) return;
     loadTrip().then(() => setLoading(false));
-  }, [tripId, loadTrip]);
+  }, [authLoading, user, router, tripId, loadTrip]);
 
   useEffect(() => {
-    if (!tripId || !trip) return;
+    if (!user || !tripId || !trip) return;
     loadDays();
-  }, [tripId, trip?.id, loadDays]);
+  }, [user, tripId, trip?.id, loadDays]);
 
   useEffect(() => {
     return () => {
@@ -330,6 +338,20 @@ export default function TripDetailPage() {
   const selCount = includeRouteIds.filter((id) =>
     allRoutes.find((r) => r.id === id && r.selected_segment_id)
   ).length;
+
+  if (authLoading || (!user && !trip)) {
+    return (
+      <div className="flex min-h-screen w-full items-center justify-center bg-bg p-4 text-text">
+        <div className="w-full max-w-app text-center md:max-w-app-md">
+          <p className="text-muted">読み込み中…</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return null;
+  }
 
   if (loading || !trip) {
     return (

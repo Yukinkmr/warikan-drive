@@ -1,6 +1,18 @@
 export const API_BASE =
   process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8001/api/v1";
 const BASE = API_BASE;
+export const AUTH_TOKEN_STORAGE_KEY = "warikan-drive-auth-token";
+
+function getAuthHeaders() {
+  if (typeof window === "undefined") return {};
+  const token = localStorage.getItem(AUTH_TOKEN_STORAGE_KEY);
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
+export function clearStoredAuth() {
+  if (typeof window === "undefined") return;
+  localStorage.removeItem(AUTH_TOKEN_STORAGE_KEY);
+}
 
 async function fetchApi<T>(
   path: string,
@@ -10,7 +22,11 @@ async function fetchApi<T>(
   const url = params ? `${BASE}${path}?${new URLSearchParams(params)}` : `${BASE}${path}`;
   const res = await fetch(url, {
     ...init,
-    headers: { "Content-Type": "application/json", ...init.headers },
+    headers: {
+      "Content-Type": "application/json",
+      ...getAuthHeaders(),
+      ...init.headers,
+    },
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({ detail: res.statusText }));
@@ -36,7 +52,6 @@ export const tripsApi = {
     fuel_efficiency: number;
     gas_price: number;
     driver_weight: number;
-    owner_id?: string | null;
   }) => fetchApi<import("@/types").Trip>("/trips", { method: "POST", body: JSON.stringify(body) }),
   update: (tripId: string, body: Partial<import("@/types").Trip>) =>
     fetchApi<import("@/types").Trip>(`/trips/${tripId}`, { method: "PATCH", body: JSON.stringify(body) }),
@@ -115,4 +130,18 @@ export const paymentsApi = {
       method: "PATCH",
       body: JSON.stringify(body),
     }),
+};
+
+export const authApi = {
+  register: (body: { name: string; email: string; password: string }) =>
+    fetchApi<import("@/types").AuthResponse>("/auth/register", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  login: (body: { email: string; password: string }) =>
+    fetchApi<import("@/types").AuthResponse>("/auth/login", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  me: () => fetchApi<import("@/types").AuthUser>("/auth/me"),
 };

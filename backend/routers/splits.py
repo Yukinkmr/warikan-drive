@@ -4,24 +4,23 @@ from decimal import Decimal
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
+from auth import get_current_user, get_trip_for_user
 from database import get_db
-from models import Trip, Day, Route, RouteSegment, Member, Split, Payment, ExtraCost
+from models import Day, ExtraCost, Member, Payment, Route, RouteSegment, Split, User
 from schemas.split import SplitCreate, SplitResponse
 from services.split_calculator import calculate_split
 
 router = APIRouter(prefix="/trips/{trip_id}/splits", tags=["splits"])
 
 
-def _get_trip(trip_id: UUID, db: Session) -> Trip:
-    trip = db.query(Trip).filter(Trip.id == trip_id).first()
-    if not trip:
-        raise HTTPException(status_code=404, detail="Trip not found")
-    return trip
-
-
 @router.post("", response_model=SplitResponse)
-def create_split(trip_id: UUID, body: SplitCreate, db: Session = Depends(get_db)):
-    trip = _get_trip(trip_id, db)
+def create_split(
+    trip_id: UUID,
+    body: SplitCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    trip = get_trip_for_user(trip_id, db, current_user)
     route_ids = body.route_ids
     include_extra_cost_ids = body.include_extra_cost_ids or []
 
@@ -100,8 +99,12 @@ def create_split(trip_id: UUID, body: SplitCreate, db: Session = Depends(get_db)
 
 
 @router.get("/latest", response_model=SplitResponse)
-def get_latest_split(trip_id: UUID, db: Session = Depends(get_db)):
-    _get_trip(trip_id, db)
+def get_latest_split(
+    trip_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    get_trip_for_user(trip_id, db, current_user)
     split = db.query(Split).filter(Split.trip_id == trip_id).order_by(Split.calculated_at.desc()).first()
     if not split:
         raise HTTPException(status_code=404, detail="No split found")
@@ -109,8 +112,13 @@ def get_latest_split(trip_id: UUID, db: Session = Depends(get_db)):
 
 
 @router.get("/{split_id}", response_model=SplitResponse)
-def get_split(trip_id: UUID, split_id: UUID, db: Session = Depends(get_db)):
-    _get_trip(trip_id, db)
+def get_split(
+    trip_id: UUID,
+    split_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    get_trip_for_user(trip_id, db, current_user)
     split = db.query(Split).filter(Split.id == split_id, Split.trip_id == trip_id).first()
     if not split:
         raise HTTPException(status_code=404, detail="Split not found")
