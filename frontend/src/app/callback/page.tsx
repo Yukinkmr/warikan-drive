@@ -1,13 +1,13 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 
 const GOOGLE_STATE_STORAGE_KEY = "warikan-drive-google-state";
 
-export default function CallbackPage() {
+function CallbackContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { loginWithGoogleCode } = useAuth();
@@ -54,19 +54,33 @@ export default function CallbackPage() {
   }, [loginWithGoogleCode, router, searchParams]);
 
   return (
+    <div className="w-full max-w-app rounded-card border border-border bg-card p-6 text-center shadow-card md:max-w-app-md">
+      {error ? (
+        <>
+          <p className="text-sm font-medium text-red">{error}</p>
+          <Link href="/" className="mt-4 inline-block text-sm font-semibold text-accent hover:underline">
+            ログイン画面へ戻る
+          </Link>
+        </>
+      ) : (
+        <p className="text-sm text-muted">Google ログインを完了しています…</p>
+      )}
+    </div>
+  );
+}
+
+export default function CallbackPage() {
+  return (
     <div className="flex min-h-screen items-center justify-center bg-bg p-4 text-text">
-      <div className="w-full max-w-app rounded-card border border-border bg-card p-6 text-center shadow-card md:max-w-app-md">
-        {error ? (
-          <>
-            <p className="text-sm font-medium text-red">{error}</p>
-            <Link href="/" className="mt-4 inline-block text-sm font-semibold text-accent hover:underline">
-              ログイン画面へ戻る
-            </Link>
-          </>
-        ) : (
-          <p className="text-sm text-muted">Google ログインを完了しています…</p>
-        )}
-      </div>
+      <Suspense
+        fallback={
+          <div className="w-full max-w-app rounded-card border border-border bg-card p-6 text-center shadow-card md:max-w-app-md">
+            <p className="text-sm text-muted">読み込み中…</p>
+          </div>
+        }
+      >
+        <CallbackContent />
+      </Suspense>
     </div>
   );
 }
