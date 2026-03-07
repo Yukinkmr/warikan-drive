@@ -112,7 +112,9 @@ def _request_routes(
         "routes.duration,"
         "routes.distanceMeters,"
         "routes.polyline.encodedPolyline,"
-        "routes.travelAdvisory.tollInfo"
+        "routes.travelAdvisory.tollInfo,"
+        "routes.legs.startLocation.latLng,"
+        "routes.legs.endLocation.latLng"
     )
 
     with httpx.Client(timeout=15.0) as client:
@@ -212,6 +214,11 @@ def _parse_routes_response(data: dict[str, Any]) -> list[dict[str, Any]]:
         summary = (r.get("description") or f"経路{i+1}").replace("\n", " ")
         if not summary:
             summary = f"経路 {i+1}"
+        # 出発地・目的地の緯度経度（最初のルートの最初の leg から取得）
+        legs = r.get("legs") or []
+        first_leg = legs[0] if legs else {}
+        start_latlng = (first_leg.get("startLocation") or {}).get("latLng") or {}
+        end_latlng = (first_leg.get("endLocation") or {}).get("latLng") or {}
         out.append({
             "polyline": r.get("polyline", {}).get("encodedPolyline"),
             "distance_km": distance_km,
@@ -219,6 +226,10 @@ def _parse_routes_response(data: dict[str, Any]) -> list[dict[str, Any]]:
             "toll_etc_yen": toll_yen,
             "toll_cash_yen": toll_yen,
             "summary": summary[:200],
+            "origin_lat": start_latlng.get("latitude"),
+            "origin_lng": start_latlng.get("longitude"),
+            "dest_lat": end_latlng.get("latitude"),
+            "dest_lng": end_latlng.get("longitude"),
         })
     return out
 

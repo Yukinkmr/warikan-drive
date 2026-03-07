@@ -21,6 +21,7 @@ export interface Day {
 
 export interface RouteSegment {
   id: string;
+  polyline: string | null;
   summary: string | null;
   distance_km: number;
   duration_min: number;

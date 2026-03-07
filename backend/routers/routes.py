@@ -96,6 +96,7 @@ def search_route(route_id: UUID, body: RouteSearchRequest, db: Session = Depends
     )
     # 既存の segment を削除して新規保存
     db.query(RouteSegment).filter(RouteSegment.route_id == route_id).delete()
+    first = True
     for s in segments_data:
         seg = RouteSegment(
             route_id=route_id,
@@ -107,6 +108,13 @@ def search_route(route_id: UUID, body: RouteSearchRequest, db: Session = Depends
             summary=s.get("summary") or "",
         )
         db.add(seg)
+        # 最初のセグメントから出発地・目的地の緯度経度を Route に保存
+        if first and s.get("origin_lat") is not None:
+            route.origin_lat = s["origin_lat"]
+            route.origin_lng = s["origin_lng"]
+            route.dest_lat = s["dest_lat"]
+            route.dest_lng = s["dest_lng"]
+            first = False
     db.commit()
     segments = db.query(RouteSegment).filter(RouteSegment.route_id == route_id).all()
     return RouteSearchResponse(

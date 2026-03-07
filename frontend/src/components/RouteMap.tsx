@@ -1,23 +1,27 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
-import {
-  GoogleMap,
-  DirectionsRenderer,
-  useJsApiLoader,
-} from "@react-google-maps/api";
+import { useEffect, useRef, useState } from "react";
+import { setOptions, importLibrary } from "@googlemaps/js-api-loader";
 import type { RouteSegment } from "@/types";
 import type { PaymentMethod } from "@/types";
 import { formatYen } from "@/lib/utils";
 
-// セグメントのインデックスに対応した色
-const ROUTE_COLORS = ["#3b82f6", "#ef4444", "#10b981", "#f59e0b", "#8b5cf6"];
+// 新しい関数型API: setOptions は一度だけ呼ぶ
+let apiOptionsSet = false;
+function ensureApiOptions() {
+  if (!apiOptionsSet) {
+    setOptions({
+      key: process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY ?? "",
+      v: "weekly",
+      language: "ja",
+      region: "JP",
+    });
+    apiOptionsSet = true;
+  }
+}
 
-const MAP_CONTAINER_STYLE: React.CSSProperties = {
-  width: "100%",
-  height: "500px",
-  borderRadius: "12px",
-};
+// 選択インデックスに対応した色
+const ROUTE_COLORS = ["#3b82f6", "#ef4444", "#10b981", "#f59e0b", "#8b5cf6"];
 
 interface RouteMapProps {
   origin: string;
@@ -33,10 +37,8 @@ interface RouteMapProps {
 }
 
 export function RouteMap({
-  origin,
   originLat,
   originLng,
-  destination,
   destLat,
   destLng,
   segments,
@@ -44,189 +46,130 @@ export function RouteMap({
   payment,
   onSelect,
 }: RouteMapProps) {
-  const { isLoaded, loadError } = useJsApiLoader({
-    id: "google-map-script",
-    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY ?? "",
-  });
+  const mapDivRef = useRef<HTMLDivElement>(null);
+  const mapRef = useRef<google.maps.Map | null>(null);
+  const polylinesRef = useRef<Map<string, google.maps.Polyline>>(new Map());
+  const markersRef = useRef<google.maps.Marker[]>([]);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [isLoaded, setIsLoaded] = useState(false);
 
-  // セグメントIDごとに DirectionsResult をキャッシュ
-  const [directionsBySegId, setDirectionsBySegId] = useState<
-    Record<string, google.maps.DirectionsResult>
-  >({});
-  const [mapError, setMapError] = useState<string | null>(null);
-  const fetchedRef = useRef<Set<string>>(new Set());
-
-  const fetchForSegment = useCallback(
-    (seg: RouteSegment) => {
-      if (!isLoaded || !origin || !destination) return;
-      if (fetchedRef.current.has(seg.id)) return;
-      fetchedRef.current.add(seg.id);
-
-      const service = new window.google.maps.DirectionsService();
-
-      const originParam =
-        originLat != null && originLng != null
-          ? new window.google.maps.LatLng(originLat, originLng)
-          : origin;
-
-      const destParam =
-        destLat != null && destLng != null
-          ? new window.google.maps.LatLng(destLat, destLng)
-          : destination;
-
-      service.route(
-        {
-          origin: originParam,
-          destination: destParam,
-          travelMode: window.google.maps.TravelMode.DRIVING,
-          // 高速/一般道を summary キーワードで選り好みできないため
-          // provideRouteAlternatives で複数取得し、summaryが最も近いものを選択
-          provideRouteAlternatives: true,
-          region: "JP",
-        },
-        (result, status) => {
-          if (status === window.google.maps.DirectionsStatus.OK && result) {
-            // summary が一致するルートを探し、見つかれば routeIndex を先頭に移動
-            const keyword = (seg.summary ?? "").split("経由")[0].trim();
-            const matchIdx = result.routes.findIndex((r) =>
-              keyword ? r.summary?.includes(keyword) : false
-            );
-            if (matchIdx > 0) {
-              // 一致したルートを先頭に移動してアクティブ表示できるようにする
-              const reordered = [
-                result.routes[matchIdx],
-                ...result.routes.filter((_, i) => i !== matchIdx),
-              ];
-              result = { ...result, routes: reordered };
-            }
-            setDirectionsBySegId((prev) => ({ ...prev, [seg.id]: result! }));
-          } else {
-            setMapError(`経路の取得に失敗しました (${status})`);
-            // エラー時はキャッシュから除外して再試行できるように
-            fetchedRef.current.delete(seg.id);
-          }
-        }
-      );
-    },
-    [isLoaded, origin, destination, originLat, originLng, destLat, destLng]
-  );
-
-  // 表示対象のセグメント（選択中 + 全件を事前フェッチ）
+  // --- Maps JS API ロード ---
   useEffect(() => {
-    if (!isLoaded || segments.length === 0) return;
-    for (const seg of segments) {
-      fetchForSegment(seg);
+    let cancelled = false;
+    ensureApiOptions();
+    // maps と geometry を並列ロード
+    Promise.all([importLibrary("maps"), importLibrary("geometry")])
+      .then(() => { if (!cancelled) setIsLoaded(true); })
+      .catch((e: unknown) => { if (!cancelled) setLoadError(String(e)); });
+    return () => { cancelled = true; };
+  }, []);
+
+  // --- Map インスタンス作成 ---
+  useEffect(() => {
+    if (!isLoaded || !mapDivRef.current || mapRef.current) return;
+    const center =
+      originLat != null && originLng != null
+        ? { lat: originLat, lng: originLng }
+        : { lat: 35.6812, lng: 139.7671 }; // デフォルトは東京駅
+    mapRef.current = new google.maps.Map(mapDivRef.current, {
+      center,
+      zoom: 10,
+      zoomControl: true,
+      streetViewControl: false,
+      mapTypeControl: false,
+      fullscreenControl: false,
+      gestureHandling: "cooperative",
+    });
+  }, [isLoaded, originLat, originLng]);
+
+  // --- Polyline 描画・更新 ---
+  useEffect(() => {
+    if (!isLoaded || !mapRef.current) return;
+    const map = mapRef.current;
+    const existing = polylinesRef.current;
+    const newIds = new Set(segments.map((s) => s.id));
+    for (const [id, poly] of existing) {
+      if (!newIds.has(id)) { poly.setMap(null); existing.delete(id); }
     }
-  }, [isLoaded, segments, fetchForSegment]);
+    const selectedSeg = segments.find((s) => s.id === selectedId) ?? segments[0];
+    const bounds = new google.maps.LatLngBounds();
+    let hasBounds = false;
+    segments.forEach((seg, idx) => {
+      if (!seg.polyline) return;
+      let path: google.maps.LatLng[];
+      try { path = google.maps.geometry.encoding.decodePath(seg.polyline); }
+      catch { return; }
+      const isSelected = seg.id === selectedSeg?.id;
+      const color = ROUTE_COLORS[isSelected ? 0 : (idx + 1) % ROUTE_COLORS.length];
+      if (existing.has(seg.id)) {
+        existing.get(seg.id)!.setOptions({
+          strokeColor: color, strokeWeight: isSelected ? 7 : 4,
+          strokeOpacity: isSelected ? 1 : 0.45, zIndex: isSelected ? 10 : 1,
+        });
+      } else {
+        const poly = new google.maps.Polyline({
+          path, map, clickable: true,
+          strokeColor: color, strokeWeight: isSelected ? 7 : 4,
+          strokeOpacity: isSelected ? 1 : 0.45, zIndex: isSelected ? 10 : 1,
+        });
+        poly.addListener("click", () => onSelect(seg.id));
+        existing.set(seg.id, poly);
+      }
+      if (isSelected) { path.forEach((ll) => bounds.extend(ll)); hasBounds = true; }
+    });
+    if (hasBounds) map.fitBounds(bounds, 32);
+  }, [isLoaded, segments, selectedId, onSelect]);
 
-  if (loadError) {
-    return (
-      <p className="py-3 text-xs text-red-500">
-        地図の読み込みに失敗しました。APIキーを確認してください。
-      </p>
-    );
-  }
+  // --- A / B マーカー ---
+  useEffect(() => {
+    if (!isLoaded || !mapRef.current) return;
+    markersRef.current.forEach((m) => m.setMap(null));
+    markersRef.current = [];
+    if (originLat != null && originLng != null)
+      markersRef.current.push(new google.maps.Marker({
+        map: mapRef.current, position: { lat: originLat, lng: originLng },
+        label: { text: "A", color: "white", fontWeight: "bold", fontSize: "13px" }, zIndex: 20,
+      }));
+    if (destLat != null && destLng != null)
+      markersRef.current.push(new google.maps.Marker({
+        map: mapRef.current, position: { lat: destLat, lng: destLng },
+        label: { text: "B", color: "white", fontWeight: "bold", fontSize: "13px" }, zIndex: 20,
+      }));
+  }, [isLoaded, originLat, originLng, destLat, destLng]);
 
-  if (!isLoaded) {
-    return (
-      <p className="py-4 text-center text-xs text-muted">地図を読み込み中…</p>
-    );
-  }
+  // --- アンマウント時クリーンアップ ---
+  useEffect(() => {
+    return () => {
+      polylinesRef.current.forEach((p) => p.setMap(null));
+      polylinesRef.current.clear();
+      markersRef.current.forEach((m) => m.setMap(null));
+      markersRef.current = [];
+    };
+  }, []);
 
-  const center =
-    originLat != null && originLng != null
-      ? { lat: originLat, lng: originLng }
-      : { lat: 35.6812, lng: 139.7671 };
-
-  const selectedSeg = segments.find((s) => s.id === selectedId) ?? segments[0];
-  const selectedDirections = selectedSeg
-    ? directionsBySegId[selectedSeg.id] ?? null
-    : null;
+  const hasAnyPolyline = segments.some((s) => s.polyline);
 
   return (
     <div className="mt-3 flex flex-col gap-3">
       {/* ─── Google Map ─────────────────────────── */}
-      <div className="overflow-hidden rounded-xl border border-border">
-        <GoogleMap
-          mapContainerStyle={MAP_CONTAINER_STYLE}
-          center={center}
-          zoom={10}
-          options={{
-            zoomControl: true,
-            streetViewControl: false,
-            mapTypeControl: false,
-            fullscreenControl: false,
-          }}
-        >
-          {/* 非選択セグメントを薄く描画 */}
-          {segments
-            .filter((s) => s.id !== selectedSeg?.id)
-            .map((seg, idx) => {
-              const dirs = directionsBySegId[seg.id];
-              if (!dirs) return null;
-              const color = ROUTE_COLORS[(idx + 1) % ROUTE_COLORS.length];
-              return (
-                <DirectionsRenderer
-                  key={seg.id}
-                  directions={dirs}
-                  routeIndex={0}
-                  options={{
-                    suppressMarkers: true,
-                    suppressInfoWindows: true,
-                    preserveViewport: true,
-                    polylineOptions: {
-                      strokeColor: color,
-                      strokeWeight: 3,
-                      strokeOpacity: 0.35,
-                      zIndex: 1,
-                    },
-                  }}
-                />
-              );
-            })}
-
-          {/* 選択中セグメントを最前面に太く描画 */}
-          {selectedSeg && selectedDirections && (
-            <DirectionsRenderer
-              key={selectedSeg.id}
-              directions={selectedDirections}
-              routeIndex={0}
-              options={{
-                suppressMarkers: false,
-                suppressInfoWindows: true,
-                preserveViewport: false,
-                polylineOptions: {
-                  strokeColor: ROUTE_COLORS[0],
-                  strokeWeight: 6,
-                  strokeOpacity: 1.0,
-                  zIndex: 10,
-                },
-              }}
-            />
-          )}
-
-          {/* 地図未取得中はローディング表示 */}
-          {!selectedDirections && (
-            <div
-              style={{
-                position: "absolute",
-                inset: 0,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                background: "rgba(0,0,0,0.05)",
-                fontSize: "12px",
-                color: "#888",
-                pointerEvents: "none",
-              }}
-            >
-              経路を描画中…
-            </div>
-          )}
-        </GoogleMap>
+      <div className="relative overflow-hidden rounded-xl border border-border" style={{ height: 360 }}>
+        <div ref={mapDivRef} style={{ width: "100%", height: "100%" }} />
+        {loadError && (
+          <div className="absolute inset-0 flex items-center justify-center bg-surface/80 text-xs text-red-500">
+            地図の読み込みに失敗しました
+          </div>
+        )}
+        {!isLoaded && !loadError && (
+          <div className="absolute inset-0 flex items-center justify-center bg-surface/80 text-xs text-muted">
+            地図を読み込み中…
+          </div>
+        )}
+        {isLoaded && !hasAnyPolyline && (
+          <div className="pointer-events-none absolute inset-0 flex items-center justify-center text-xs text-muted">
+            再検索するとルートが表示されます
+          </div>
+        )}
       </div>
-
-      {mapError && <p className="text-xs text-red-500">{mapError}</p>}
 
       {/* ─── ルート選択リスト ───────────────────── */}
       <div className="flex flex-col gap-2">
@@ -234,7 +177,6 @@ export function RouteMap({
           const isSelected = seg.id === selectedId;
           const toll = payment === "ETC" ? seg.toll_etc_yen : seg.toll_cash_yen;
           const color = ROUTE_COLORS[isSelected ? 0 : (idx + 1) % ROUTE_COLORS.length];
-          const isFetching = !directionsBySegId[seg.id];
           return (
             <button
               key={seg.id}
@@ -252,7 +194,6 @@ export function RouteMap({
                 style={{
                   backgroundColor: color,
                   boxShadow: `0 0 0 2px white, 0 0 0 3px ${color}`,
-                  opacity: isFetching ? 0.4 : 1,
                 }}
               />
               <div className="min-w-0 flex-1">
