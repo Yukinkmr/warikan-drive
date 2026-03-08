@@ -137,7 +137,7 @@ input:focus:not(:focus-visible) {
   }
 }
 
-/* Theme switch: 参考サイトと同じ構造（input + label、span::after でスライドするノブ） */
+/* Theme switch */
 .theme-switch {
   position: relative;
   display: inline-block;
@@ -155,102 +155,163 @@ input:focus:not(:focus-visible) {
 }
 
 /* ホバー時のみグレーに（:focus は含めない＝クリック後フォーカスが残ってもカーソルを離せば元に戻る） */
-.theme-switch__input:hover + .theme-switch__label {
-  background-color: var(--label);
-}
-
-.theme-switch__input:hover + .theme-switch__label span::after {
-  filter: brightness(1.1);
-}
-
 .theme-switch__input:focus-visible + .theme-switch__label {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 
-/* ピル型ラベル（コンパクト版: 72x28px） */
 .theme-switch__label {
   position: relative;
   z-index: 0;
   display: block;
-  width: 72px;
-  height: 28px;
-  padding: 6px;
-  border-radius: 50px;
+  width: 66px;
+  height: 31px;
+  padding: 3px;
+  border-radius: 999px;
   cursor: pointer;
-  text-align: center;
-  background-color: var(--border);
-  box-shadow: -2px 2px 8px inset rgba(0, 0, 0, 0.25);
-  transition: background-color 0.2s ease-in-out;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--surface) 84%, white 16%) 0%,
+    color-mix(in srgb, var(--border) 92%, black 8%) 100%
+  );
+  border: 1px solid color-mix(in srgb, var(--border) 86%, white 14%);
+  box-shadow:
+    inset 0 2px 5px rgba(255, 255, 255, 0.08),
+    inset 0 -3px 8px rgba(0, 0, 0, 0.16),
+    0 2px 8px rgba(0, 0, 0, 0.16);
+  transition:
+    background 0.35s ease,
+    border-color 0.35s ease,
+    box-shadow 0.35s ease;
 }
 
-/* 太陽アイコン（ラベルの左外側） */
-.theme-switch__label::before {
-  content: "\263C";
-  font-size: 0.85rem;
-  position: absolute;
-  top: 50%;
-  right: 100%;
-  margin-right: 6px;
-  transform: translate3d(0, -50%, 0);
-  color: var(--accent);
-  transition: color 0.2s;
+[data-theme="light"] .theme-switch__label {
+  background: linear-gradient(180deg, #e8e8e8 0%, #d9d9d9 100%);
+  border-color: rgba(148, 163, 184, 0.28);
+  box-shadow:
+    inset 0 2px 4px rgba(255, 255, 255, 0.65),
+    inset 0 -2px 5px rgba(15, 23, 42, 0.08),
+    0 2px 8px rgba(15, 23, 42, 0.12);
 }
 
-[data-theme="light"] .theme-switch__label::before {
-  color: #eab308; /* ライトモード時は太陽を黄色に */
+.theme-switch__input:hover + .theme-switch__label {
+  box-shadow:
+    inset 0 2px 6px rgba(255, 255, 255, 0.1),
+    inset 0 -3px 9px rgba(0, 0, 0, 0.2),
+    0 4px 12px rgba(0, 0, 0, 0.18);
 }
 
-/* 月アイコン（ラベルの右外側） */
-.theme-switch__label::after {
-  content: "\263E";
-  font-size: 0.85rem;
-  position: absolute;
-  top: 50%;
-  left: 100%;
-  margin-left: 6px;
-  transform: translate3d(0, -50%, 0);
-  color: var(--muted);
-  transition: color 0.2s;
+[data-theme="light"] .theme-switch__input:hover + .theme-switch__label {
+  box-shadow:
+    inset 0 2px 5px rgba(255, 255, 255, 0.7),
+    inset 0 -2px 6px rgba(15, 23, 42, 0.1),
+    0 4px 12px rgba(15, 23, 42, 0.14);
 }
 
-/* ラベル内の span（テキストは小さく非表示、ノブは span::after で配置） */
-.theme-switch__label span {
-  position: absolute;
-  bottom: 100%;
-  left: 0;
-  width: 100%;
-  height: 0;
-  font-size: 0;
-  line-height: 0;
-  overflow: visible;
-}
-
-/* スライドする円形ノブ（span::after）— ピル内に縦中央配置 */
-.theme-switch__label span::after {
+.theme-switch__thumb {
   position: absolute;
   top: 3px;
   left: 3px;
-  width: 22px;
-  height: 22px;
-  content: "";
+  width: 25px;
+  height: 25px;
   border-radius: 50%;
-  background-color: var(--accent);
-  box-shadow: -2px 2px 4px rgba(0, 0, 0, 0.3);
-  transition: transform 0.2s ease-in-out, background-color 0.2s;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--card) 92%, white 8%) 0%,
+    color-mix(in srgb, var(--surface) 88%, black 12%) 100%
+  );
+  box-shadow:
+    0 8px 18px rgba(0, 0, 0, 0.2),
+    inset 0 1px 2px rgba(255, 255, 255, 0.18);
+  transform: translateX(0);
+  transition:
+    transform 0.42s cubic-bezier(0.22, 1, 0.36, 1),
+    background 0.28s ease,
+    box-shadow 0.28s ease;
 }
 
-/* チェック時（ダークモード）：ノブを右へスライド、アイコン色反転 */
-.theme-switch__input:checked + .theme-switch__label::before {
-  color: var(--muted);
+[data-theme="light"] .theme-switch__thumb {
+  background: linear-gradient(180deg, #f4b54b 0%, #ea9e21 100%);
+  box-shadow:
+    0 8px 16px rgba(234, 179, 8, 0.28),
+    inset 0 1px 2px rgba(255, 255, 255, 0.35);
 }
 
-.theme-switch__input:checked + .theme-switch__label::after {
-  color: var(--accent);
+.theme-switch__input:checked + .theme-switch__label .theme-switch__thumb {
+  transform: translateX(35px);
+  background: linear-gradient(180deg, #8c8c8c 0%, #5f5f5f 100%);
+  box-shadow:
+    0 8px 18px rgba(0, 0, 0, 0.26),
+    inset 0 1px 2px rgba(255, 255, 255, 0.2);
 }
 
-.theme-switch__input:checked + .theme-switch__label span::after {
-  transform: translate3d(41px, 0, 0);
+.theme-switch__slot {
+  position: absolute;
+  top: 3px;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 25px;
+  height: 25px;
+}
+
+.theme-switch__slot--sun {
+  left: 3px;
+}
+
+.theme-switch__slot--moon {
+  right: 3px;
+}
+
+.theme-switch__icon {
+  width: 12px;
+  height: 12px;
+  transition:
+    color 0.28s ease,
+    transform 0.42s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.28s ease;
+  pointer-events: none;
+  stroke: currentColor;
+  fill: none;
+}
+
+.theme-switch__icon--sun {
+  color: #fff7d6;
+  transform: translateX(0.5px);
+}
+
+[data-theme="light"] .theme-switch__icon--sun {
+  color: #fffdf2;
+}
+
+.theme-switch__icon--moon {
+  color: color-mix(in srgb, var(--muted) 70%, white 30%);
+  transform: translateX(-0.5px);
+}
+
+.theme-switch__input:checked + .theme-switch__label .theme-switch__icon--sun {
+  color: color-mix(in srgb, var(--muted) 72%, white 28%);
+}
+
+.theme-switch__input:checked + .theme-switch__label .theme-switch__icon--moon {
+  color: #ffffff;
+}
+
+.theme-switch__input:hover + .theme-switch__label .theme-switch__icon {
+  transform: scale(1.04);
+}
+
+.theme-switch__text {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 /* 編集ポップアップの開閉アニメーション */

@@ -7,6 +7,7 @@ import type { PaymentMethod } from "@/types";
 import { useTheme } from "@/contexts/ThemeContext";
 import { formatYen } from "@/lib/utils";
 import { Button } from "@/components/ui/Button";
+import { LoadingMessage } from "@/components/ui/LoadingMessage";
 
 const hasMapsKey = () =>
   Boolean(typeof process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY === "string" && process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY?.trim());
@@ -208,7 +209,7 @@ export function RouteMap({
         )}
         {!isLoaded && !loadError && (
           <div className="absolute inset-0 flex items-center justify-center bg-surface/80 text-xs text-muted">
-            地図を読み込み中…
+            <LoadingMessage label="地図を読み込み中" className="text-xs" />
           </div>
         )}
         {isLoaded && !hasAnyPolyline && (

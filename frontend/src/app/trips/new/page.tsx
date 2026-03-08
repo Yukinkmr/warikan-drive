@@ -4,6 +4,7 @@ import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { tripsApi, API_BASE } from "@/lib/api";
+import { LoadingMessage } from "@/components/ui/LoadingMessage";
 import { useAuth } from "@/contexts/AuthContext";
 
 export default function NewTripPage() {
@@ -65,7 +66,7 @@ export default function NewTripPage() {
     return (
       <div className="flex min-h-screen w-full flex-col items-center justify-center gap-6 bg-bg p-4 text-text">
         <div className="w-full max-w-app text-center md:max-w-app-md">
-          <p className="text-muted">読み込み中…</p>
+          <LoadingMessage />
         </div>
       </div>
     );
