@@ -751,7 +751,7 @@ export default function TripDetailPage({ params }: PageProps) {
             type="button"
             onClick={addRoute}
             disabled={isAddingRoute}
-            className="mt-4 mb-5 flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-border bg-transparent py-3 text-sm font-medium text-muted transition-colors hover:border-accent hover:bg-accentDim/20 hover:text-accent disabled:pointer-events-none disabled:opacity-60"
+            className="mt-4 mb-5 flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-muted bg-transparent py-3 text-sm font-medium text-muted transition-colors hover:border-accent hover:bg-accentDim/20 hover:text-accent disabled:pointer-events-none disabled:opacity-60"
           >
             {isAddingRoute ? (
               <span className="h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-muted/30 border-t-muted" aria-hidden />
