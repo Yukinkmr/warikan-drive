@@ -292,7 +292,7 @@ export function SplitView({
         {extraCosts.map((c) => (
           <div
             key={c.id}
-            className="flex justify-between items-center py-1.5 border-b border-border text-[13px]"
+            className="fade-in flex justify-between items-center py-1.5 border-b border-border text-[13px]"
           >
             <span className="text-label">{c.label}</span>
             <div className="flex gap-2 items-center">
@@ -323,7 +323,8 @@ export function SplitView({
 
       {splitResult && (
         <Card
-          className="border-accent shadow-glow"
+          key={splitResult.id}
+          className="result-pop border-accent shadow-glow"
         >
           <div className="text-center mb-4">
             <div className="text-xs font-semibold uppercase tracking-[0.2em] text-muted mb-1.5">

@@ -33,6 +33,7 @@ export default function TripDetailPage({ params }: PageProps) {
   const [loadingRouteId, setLoadingRouteId] = useState<string | null>(null);
   const [includeRouteIds, setIncludeRouteIds] = useState<string[]>([]);
   const [isAddingRoute, setIsAddingRoute] = useState(false);
+  const [removingRouteIds, setRemovingRouteIds] = useState<Set<string>>(new Set());
   const [routePaymentById, setRoutePaymentById] = useState<Record<string, PaymentMethod>>({});
   const [loading, setLoading] = useState(true);
   const [loadingRouteCards, setLoadingRouteCards] = useState(true);
@@ -301,10 +302,19 @@ export default function TripDetailPage({ params }: PageProps) {
       const day = days.find((d) => d.id === dayId);
       if (!route || !day) return;
 
+      // 退場アニメーションを開始し、完了後に実際に削除
+      setRemovingRouteIds((prev) => new Set(prev).add(routeId));
+      await new Promise((res) => setTimeout(res, 230));
+
       const savedSegments = segmentsByRouteId[routeId] ?? [];
       const wasIncluded = includeRouteIds.includes(routeId);
 
-      // 即時UIから消す
+      // UIから消す
+      setRemovingRouteIds((prev) => {
+        const next = new Set(prev);
+        next.delete(routeId);
+        return next;
+      });
       setRoutesByDayId((prev) => ({
         ...prev,
         [dayId]: (prev[dayId] ?? []).filter((r) => r.id !== routeId),
@@ -593,7 +603,7 @@ export default function TripDetailPage({ params }: PageProps) {
             swipeStartX.current = null;
           }}
         >
-        <div className={activeView !== "detail" ? "hidden" : ""}>
+        <div className={activeView !== "detail" ? "tab-panel--hidden" : "tab-panel--active"}>
           {routeCards.length === 0 && (
             <div className="py-12 text-center text-sm text-muted">
               まずルートを追加してください
@@ -625,6 +635,7 @@ export default function TripDetailPage({ params }: PageProps) {
                     [item.route.id]: nextPayment,
                   }));
                 }}
+                isRemoving={removingRouteIds.has(item.route.id)}
               />
             ))}
           </div>
@@ -655,7 +666,7 @@ export default function TripDetailPage({ params }: PageProps) {
           </Button>
         </div>
 
-        <div className={activeView !== "split" ? "hidden" : ""}>
+        <div className={activeView !== "split" ? "tab-panel--hidden" : "tab-panel--active"}>
           <SplitView
             tripId={tripId}
             trip={trip}
@@ -665,7 +676,7 @@ export default function TripDetailPage({ params }: PageProps) {
           />
         </div>
 
-        <div className={activeView !== "payments" ? "hidden" : ""}>
+        <div className={activeView !== "payments" ? "tab-panel--hidden" : "tab-panel--active"}>
           <PaymentStatusView tripId={tripId} />
         </div>
         </main>

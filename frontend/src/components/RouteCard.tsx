@@ -23,6 +23,7 @@ export function RouteCard({
   selected,
   onToggle,
   onPaymentChange,
+  isRemoving = false,
 }: {
   route: Route;
   idx: number;
@@ -38,6 +39,7 @@ export function RouteCard({
   selected: boolean;
   onToggle: () => void;
   onPaymentChange: (payment: PaymentMethod) => void;
+  isRemoving?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
@@ -64,6 +66,8 @@ export function RouteCard({
   return (
     <div
       className={`rounded-2xl border border-border bg-card p-4 shadow-card transition-all ${
+        isRemoving ? "card-exit" : "card-enter"
+      } ${
         selected ? "border-accent shadow-glow" : "border-border"
       }`}
     >
@@ -248,21 +252,23 @@ export function RouteCard({
         </Button>
       </div>
       {open && segments.length > 0 && (
-        <RouteMap
-          origin={route.origin}
-          originLat={route.origin_lat}
-          originLng={route.origin_lng}
-          destination={route.destination}
-          destLat={route.dest_lat}
-          destLng={route.dest_lng}
-          segments={segments}
-          selectedId={route.selected_segment_id}
-          payment={payment}
-          loading={loading}
-          onSelect={(id) => {
-            onSelectSeg(id);
-          }}
-        />
+        <div className="slide-down mt-3">
+          <RouteMap
+            origin={route.origin}
+            originLat={route.origin_lat}
+            originLng={route.origin_lng}
+            destination={route.destination}
+            destLat={route.dest_lat}
+            destLng={route.dest_lng}
+            segments={segments}
+            selectedId={route.selected_segment_id}
+            payment={payment}
+            loading={loading}
+            onSelect={(id) => {
+              onSelectSeg(id);
+            }}
+          />
+        </div>
       )}
     </div>
   );

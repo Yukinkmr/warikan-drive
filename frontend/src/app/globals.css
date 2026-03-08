@@ -93,7 +93,7 @@
 
 [data-theme="light"] main,
 [data-theme="light"] .auth-screen {
-  background-color: #cbd5e1;
+  background-color: #e4ebf3;
 }
 
 body {
@@ -308,6 +308,116 @@ input:focus:not(:focus-visible) {
 
 .edit-popup-panel.edit-popup-closing {
   animation: edit-popup-panel-exit 0.18s ease-in forwards;
+}
+
+/* ─── 汎用アニメーション ─── */
+
+/* タブパネル切り替え */
+@keyframes tab-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.tab-panel--hidden {
+  display: none;
+}
+
+.tab-panel--active {
+  animation: tab-fade-in 0.24s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* カード追加（ルートカードなど） */
+@keyframes card-enter {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.card-enter {
+  animation: card-enter 0.28s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* カード削除（ルートカードなど） */
+@keyframes card-exit {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    max-height: 600px;
+    margin-bottom: 0.75rem;
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.97);
+    max-height: 0;
+    margin-bottom: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+  }
+}
+
+.card-exit {
+  animation: card-exit 0.25s cubic-bezier(0.4, 0, 1, 1) forwards;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+/* スライドダウン（RouteMap 展開・地図表示など） */
+@keyframes slide-down {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.slide-down {
+  animation: slide-down 0.22s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* フェードイン（追加費用行・支払い行など） */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-in {
+  animation: fade-in 0.2s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* ポップイン（計算結果カードなど） */
+@keyframes result-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.result-pop {
+  animation: result-pop 0.32s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 /* ─── LP (Landing Page) ─── */
