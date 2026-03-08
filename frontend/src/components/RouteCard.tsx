@@ -206,7 +206,7 @@ export function RouteCard({
           onClick={handleSearch}
           disabled={!route.origin || !route.destination || loading}
           variant="ghost"
-          className="flex-1 text-xs hover:!border-accent hover:!bg-accentDim active:!border-accent active:shadow-glow"
+          className="flex-1 text-xs border-accent hover:!border-accent hover:!bg-accentDim active:!border-accent active:shadow-glow"
         >
           {loading ? (
             <span className="inline-flex items-center gap-2">
@@ -264,16 +264,7 @@ export function RouteCard({
           }}
         />
       )}
-      {selSeg && (
-        <a
-          href={`https://www.google.com/maps/dir/${route.origin}/${route.destination}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="mt-3 block text-center text-xs font-medium text-accent no-underline transition-colors hover:underline"
-        >
-          🗺 Google Maps に移動
-        </a>
-      )}
     </div>
   );
 }
+

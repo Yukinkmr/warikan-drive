@@ -6,6 +6,7 @@ import type { RouteSegment } from "@/types";
 import type { PaymentMethod } from "@/types";
 import { useTheme } from "@/contexts/ThemeContext";
 import { formatYen } from "@/lib/utils";
+import { Button } from "@/components/ui/Button";
 
 const hasMapsKey = () =>
   Boolean(typeof process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY === "string" && process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY?.trim());
@@ -22,6 +23,15 @@ function ensureApiOptions() {
     });
     apiOptionsSet = true;
   }
+}
+
+function buildGoogleMapsDrivingUrl(origin: string, destination: string) {
+  const url = new URL("https://www.google.com/maps/dir/");
+  url.searchParams.set("api", "1");
+  url.searchParams.set("origin", origin);
+  url.searchParams.set("destination", destination);
+  url.searchParams.set("travelmode", "driving");
+  return url.toString();
 }
 
 // 選択インデックスに対応した色
@@ -42,8 +52,10 @@ interface RouteMapProps {
 }
 
 export function RouteMap({
+  origin,
   originLat,
   originLng,
+  destination,
   destLat,
   destLng,
   segments,
@@ -68,6 +80,7 @@ export function RouteMap({
   const isSwitchingRoute =
     pendingSelectedId != null && pendingSelectedId !== selectedId;
   const isBusy = isSwitchingRoute || loading;
+  const googleMapsUrl = buildGoogleMapsDrivingUrl(origin, destination);
 
   // --- Maps JS API ロード ---
   useEffect(() => {
@@ -264,6 +277,16 @@ export function RouteMap({
           );
         })}
       </div>
+      <div className="flex justify-center text-sm text-muted">
+      <Button
+          onClick={() => window.open(googleMapsUrl, "_blank", "noopener,noreferrer")}
+          variant="ghost"
+          className="text-xs hover:!border-accent hover:!bg-accentDim active:!border-accent active:shadow-glow"
+        >
+          🗺 Google Maps に移動
+        </Button>
     </div>
+    </div>
+        
   );
 }
