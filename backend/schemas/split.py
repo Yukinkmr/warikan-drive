@@ -26,15 +26,3 @@ class SplitResponse(BaseModel):
     driver_yen: int
     passenger_yen: int
     calculated_at: datetime
-
-
-class PaymentResponse(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
-    id: UUID
-    split_id: UUID
-    member_id: UUID
-    amount_yen: int
-    status: str
-    paypay_request_id: str | None
-    paid_at: datetime | None
