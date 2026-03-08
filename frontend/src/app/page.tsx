@@ -67,6 +67,12 @@ export default function HomePage() {
       .finally(() => setLoadingTrips(false));
   }, [user]);
 
+  // トリップ一覧表示中に詳細ページを prefetch し、クリック時の遷移を速くする
+  useEffect(() => {
+    if (!trips.length) return;
+    trips.forEach((t) => router.prefetch(`/trips/${t.id}`));
+  }, [trips, router]);
+
   const handleAuthSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setAuthError(null);

@@ -202,7 +202,7 @@ export default function TripDetailPage({ params }: PageProps) {
       const nextRoutes = Object.fromEntries(routeEntries);
       setRoutePaymentById((prev) => {
         const next = { ...prev };
-        const defaultPayment = (trip?.payment_method as PaymentMethod) || "ETC";
+        const defaultPayment = "ETC";
         Object.values(nextRoutes)
           .flat()
           .forEach((route) => {
@@ -238,7 +238,7 @@ export default function TripDetailPage({ params }: PageProps) {
     } catch {
       setDays([]);
     }
-  }, [tripId, trip?.payment_method]);
+  }, [tripId]);
 
   useEffect(() => {
     if (authLoading) return;
@@ -247,24 +247,27 @@ export default function TripDetailPage({ params }: PageProps) {
       return;
     }
     if (!tripId) return;
-    Promise.all([loadTrip(), loadDays()]).finally(() => setLoading(false));
+    setLoadingRouteCards(true);
+    Promise.all([loadTrip(), loadDays()]).finally(() => {
+      setLoading(false);
+      setLoadingRouteCards(false);
+    });
   }, [authLoading, user, router, tripId, loadTrip, loadDays]);
 
+  // trip 取得後にプランの支払い方法をルートごとのデフォルトに反映
   useEffect(() => {
-    if (!user || !tripId || !trip) return;
-    let cancelled = false;
-    setLoadingRouteCards(true);
-    loadDays().finally(() => {
-      if (!cancelled) {
-        setLoadingRouteCards(false);
-      }
+    if (!trip || Object.keys(routesByDayId).length === 0) return;
+    const defaultPayment = (trip.payment_method as PaymentMethod) || "ETC";
+    setRoutePaymentById((prev) => {
+      const next = { ...prev };
+      Object.values(routesByDayId)
+        .flat()
+        .forEach((route) => {
+          next[route.id] = defaultPayment;
+        });
+      return next;
     });
-    return () => {
-      cancelled = true;
-    };
-    // trip?.id で「どのプランか」を追跡しており、trip オブジェクト全体は意図的に省略
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, tripId, trip?.id, loadDays]);
+  }, [trip?.id, trip?.payment_method, routesByDayId]);
 
   useEffect(() => {
     return () => {
