@@ -639,7 +639,7 @@ export default function TripDetailPage({ params }: PageProps) {
           onClick={() => setActiveView("split")}
           disabled={selCount === 0}
           variant="primary"
-          className="w-full py-3.5 text-sm sm:max-w-md"
+          className="mt-4 mb-5 flex w-full items-center justify-center "
         >
           {selCount > 0
             ? `${selCount}ルートで割り勘計算 →`
