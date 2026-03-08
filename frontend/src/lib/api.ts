@@ -125,6 +125,27 @@ export const splitsApi = {
     fetchApi<import("@/types").Split>(`/trips/${tripId}/splits/${splitId}`),
 };
 
+// Members
+export const membersApi = {
+  list: (tripId: string) => fetchApi<import("@/types").Member[]>(`/trips/${tripId}/members`),
+  create: (tripId: string, body: { display_name: string; role?: "driver" | "passenger"; user_id?: string | null }) =>
+    fetchApi<import("@/types").Member>(`/trips/${tripId}/members`, {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  update: (
+    tripId: string,
+    memberId: string,
+    body: Partial<{ display_name: string; role: "driver" | "passenger" }>
+  ) =>
+    fetchApi<import("@/types").Member>(`/trips/${tripId}/members/${memberId}`, {
+      method: "PATCH",
+      body: JSON.stringify(body),
+    }),
+  delete: (tripId: string, memberId: string) =>
+    fetchApi<void>(`/trips/${tripId}/members/${memberId}`, { method: "DELETE" }),
+};
+
 // Payments
 export const paymentsApi = {
   list: (splitId: string) => fetchApi<import("@/types").Payment[]>(`/splits/${splitId}/payments`),

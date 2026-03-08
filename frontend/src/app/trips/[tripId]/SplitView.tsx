@@ -403,7 +403,7 @@ export function SplitView({ tripId }: { tripId: string }) {
             </div>
             <div className="flex-1 rounded-2xl border border-border bg-statBg p-3 text-center">
               <div className="text-xs font-medium text-muted mb-0.5">
-                🧑‍🤝‍🧑 同乗者×{people - 1}
+                🧑‍🤝‍🧑 同乗者×{Math.max(people - 1, 0)}
               </div>
               <div className="font-bold text-lg text-text">
                 {formatYen(splitResult.passenger_yen)}

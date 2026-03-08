@@ -31,7 +31,8 @@ CREATE TABLE trips (
 CREATE TABLE members (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   trip_id UUID NOT NULL REFERENCES trips(id) ON DELETE CASCADE,
-  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+  display_name VARCHAR(80) NOT NULL,
   role member_role_enum NOT NULL,
   joined_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
   UNIQUE(trip_id, user_id)
@@ -115,8 +116,21 @@ CREATE TABLE payments (
   status payment_status_enum NOT NULL DEFAULT 'pending',
   paypay_request_id VARCHAR(100),
   paid_at TIMESTAMP WITH TIME ZONE,
+  participant_role member_role_enum NOT NULL,
+  participant_label VARCHAR(100) NOT NULL,
+  participant_order INT NOT NULL DEFAULT 0,
+  paypay_merchant_payment_id VARCHAR(64),
+  paypay_code_id VARCHAR(100),
+  paypay_link_url VARCHAR(500),
+  paypay_deeplink VARCHAR(500),
+  paypay_qr_url VARCHAR(500),
+  paypay_provider_status VARCHAR(50),
+  paypay_requested_at TIMESTAMP WITH TIME ZONE,
+  paypay_last_status_sync_at TIMESTAMP WITH TIME ZONE,
   UNIQUE(split_id, member_id)
 );
+
+CREATE INDEX idx_payments_participant_order ON payments(split_id, participant_order);
 
 CREATE INDEX idx_trips_owner ON trips(owner_id);
 CREATE INDEX idx_members_trip ON members(trip_id);

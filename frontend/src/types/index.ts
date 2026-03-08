@@ -93,6 +93,8 @@ export interface Payment {
   id: string;
   split_id: string;
   member_id: string;
+  member_name: string;
+  member_role: "driver" | "passenger";
   amount_yen: number;
   status: "pending" | "paid";
   paypay_request_id: string | null;
@@ -102,7 +104,8 @@ export interface Payment {
 export interface Member {
   id: string;
   trip_id: string;
-  user_id: string;
+  user_id: string | null;
+  display_name: string;
   role: "driver" | "passenger";
   joined_at: string;
 }
