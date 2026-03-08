@@ -36,6 +36,7 @@ export default function TripDetailPage({ params }: PageProps) {
   const [isAddingRoute, setIsAddingRoute] = useState(false);
   const [payment, setPayment] = useState<PaymentMethod>("ETC");
   const [loading, setLoading] = useState(true);
+  const [loadingRouteCards, setLoadingRouteCards] = useState(true);
   const [activeView, setActiveView] = useState<"detail" | "split">("detail");
   const swipeStartX = useRef<number | null>(null);
   const updateRouteDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -109,7 +110,16 @@ export default function TripDetailPage({ params }: PageProps) {
 
   useEffect(() => {
     if (!user || !tripId || !trip) return;
-    loadDays();
+    let cancelled = false;
+    setLoadingRouteCards(true);
+    loadDays().finally(() => {
+      if (!cancelled) {
+        setLoadingRouteCards(false);
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
     // trip?.id で「どのプランか」を追跡しており、trip オブジェクト全体は意図的に省略
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, tripId, trip?.id, loadDays]);
@@ -443,11 +453,11 @@ export default function TripDetailPage({ params }: PageProps) {
     return null;
   }
 
-  if (loading || !trip) {
+  if (loading || (trip && loadingRouteCards) || !trip) {
     return (
       <div className="flex min-h-screen w-full items-center justify-center bg-bg p-4 text-text">
         <div className="w-full max-w-app text-center md:max-w-app-md">
-          {loading ? (
+          {loading || (trip && loadingRouteCards) ? (
             <p className="text-muted">読み込み中…</p>
           ) : (
             <div>
