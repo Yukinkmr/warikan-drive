@@ -51,7 +51,7 @@ class Route(Base):
     distance_km = Column(Numeric(7, 2), nullable=True)
     toll_yen = Column(Integer, default=0)
     fuel_yen = Column(Integer, default=0)
-    is_include_split = Column(Boolean, default=True)
+    is_include_split = Column(Boolean, default=False, server_default="false")
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
