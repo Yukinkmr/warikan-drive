@@ -1,9 +1,10 @@
 "use client";
 
-import { use, useEffect, useState } from "react";
+import { use, useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { tripsApi } from "@/lib/api";
+import { tripsApi, daysApi, routesApi } from "@/lib/api";
+import type { Trip, Day, Route, RouteSegment } from "@/types";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { LoadingMessage } from "@/components/ui/LoadingMessage";
 import { useAuth } from "@/contexts/AuthContext";
@@ -15,8 +16,57 @@ export default function SplitPage({ params }: PageProps) {
   const { tripId } = use(params);
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
-  const [tripName, setTripName] = useState<string | null>(null);
+  const [trip, setTrip] = useState<Trip | null>(null);
+  const [days, setDays] = useState<Day[]>([]);
+  const [routesByDayId, setRoutesByDayId] = useState<Record<string, Route[]>>({});
+  const [segmentsByRouteId, setSegmentsByRouteId] = useState<
+    Record<string, RouteSegment[]>
+  >({});
   const [loading, setLoading] = useState(true);
+
+  const loadTrip = useCallback(async () => {
+    if (!tripId) return;
+    try {
+      const t = await tripsApi.get(tripId);
+      setTrip(t);
+    } catch {
+      setTrip(null);
+    }
+  }, [tripId]);
+
+  const loadDays = useCallback(async () => {
+    if (!tripId) return;
+    try {
+      const list = await daysApi.list(tripId);
+      setDays(list);
+      const routeEntries = await Promise.all(
+        list.map(async (day) => [day.id, await routesApi.list(day.id)] as const)
+      );
+      const nextRoutes = Object.fromEntries(routeEntries);
+      const selectedRoutes = routeEntries.flatMap(([, routes]) =>
+        routes.filter((route) => route.selected_segment_id)
+      );
+      const segmentEntries = await Promise.all(
+        selectedRoutes.map(async (route) => {
+          try {
+            const { segments } = await routesApi.listSegments(route.id);
+            return [route.id, segments] as const;
+          } catch {
+            return null;
+          }
+        })
+      );
+      const nextSegments = Object.fromEntries(
+        segmentEntries.filter(
+          (entry): entry is readonly [string, RouteSegment[]] => entry !== null
+        )
+      );
+      setRoutesByDayId(nextRoutes);
+      setSegmentsByRouteId((prev) => ({ ...prev, ...nextSegments }));
+    } catch {
+      setDays([]);
+    }
+  }, [tripId]);
 
   useEffect(() => {
     if (authLoading) return;
@@ -25,12 +75,8 @@ export default function SplitPage({ params }: PageProps) {
       return;
     }
     if (!tripId) return;
-    tripsApi
-      .get(tripId)
-      .then((t) => setTripName(t.name))
-      .catch(() => setTripName(null))
-      .finally(() => setLoading(false));
-  }, [authLoading, user, router, tripId]);
+    Promise.all([loadTrip(), loadDays()]).finally(() => setLoading(false));
+  }, [authLoading, user, router, tripId, loadTrip, loadDays]);
 
   if (authLoading || !user) {
     return (
@@ -42,7 +88,7 @@ export default function SplitPage({ params }: PageProps) {
     );
   }
 
-  if (loading || tripName === null) {
+  if (loading || !trip) {
     return (
       <div className="flex min-h-screen w-full items-center justify-center bg-bg p-4 text-text">
         <div className="w-full max-w-app text-center md:max-w-app-md">
@@ -88,7 +134,7 @@ export default function SplitPage({ params }: PageProps) {
                 割り勘
               </p>
               <h1 className="mt-1 truncate text-xl font-bold tracking-tight text-white sm:text-2xl md:text-[1.65rem]">
-                {tripName}
+                {trip.name}
               </h1>
               <p className="mt-0.5 text-xs text-white/70 sm:text-sm">割り勘計算</p>
             </div>
@@ -96,7 +142,13 @@ export default function SplitPage({ params }: PageProps) {
         </header>
 
         <main className="p-4 pb-8 sm:p-5 md:p-6 md:pb-10 lg:p-8">
-          <SplitView tripId={tripId} />
+          <SplitView
+          tripId={tripId}
+          trip={trip}
+          days={days}
+          routesByDayId={routesByDayId}
+          segmentsByRouteId={segmentsByRouteId}
+        />
         </main>
       </div>
     </div>

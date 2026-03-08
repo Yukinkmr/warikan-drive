@@ -1,22 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 
 export default function LpPage() {
-  const starsRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!starsRef.current) return;
-    for (let i = 0; i < 50; i++) {
-      const s = document.createElement("div");
-      s.className = "lp-star";
-      const sz = Math.random() * 2 + 1;
-      s.style.cssText = `width:${sz}px;height:${sz}px;top:${Math.random() * 100}%;left:${Math.random() * 100}%;--d:${2 + Math.random() * 5}s;--o:${0.15 + Math.random() * 0.5};animation-delay:${Math.random() * 5}s`;
-      starsRef.current.appendChild(s);
-    }
-  }, []);
-
   useEffect(() => {
     const obs = new IntersectionObserver(
       (entries) => {
@@ -24,247 +11,172 @@ export default function LpPage() {
           if (e.isIntersecting) e.target.classList.add("lp-visible");
         });
       },
-      { threshold: 0.15 }
+      { threshold: 0.08 }
     );
-    document.querySelectorAll(".lp-fade-up").forEach((el) => obs.observe(el));
+    document.querySelectorAll(".lp-fade").forEach((el) => obs.observe(el));
     return () => obs.disconnect();
   }, []);
 
   return (
     <div className="lp-page">
-      <nav className="lp-nav">
-        <Link href="/lp" className="lp-nav-logo">
-          🚗 Warikan Drive
+      <header className="lp-header">
+        <Link href="/lp" className="lp-logo">
+          Warikan Drive
         </Link>
-        <Link href="/" className="lp-nav-cta">
-          今すぐ試す
+        <Link href="/" className="lp-header-cta">
+          アプリを開く
         </Link>
-      </nav>
+      </header>
 
-      <section id="hero" className="lp-hero">
-        <div className="lp-hero-bg" />
-        <div className="lp-stars" ref={starsRef} />
-        <div className="lp-hero-content">
-          <span className="lp-tag">Hackathon Project 2026</span>
-          <span className="lp-hero-car">🚗</span>
-          <h1 className="lp-hero-title">Warikan Drive</h1>
-          <p className="lp-hero-sub">
-            素早く割り勘、<span>旅終わりのドライバーさんへ。</span>
-            <br />
-            ETC料金・ガソリン代・運転手傾斜を
-            <br />
-            その場で計算して即集金。
-          </p>
-          <div className="lp-hero-btns">
-            <Link href="/" className="lp-btn-primary">
-              今すぐ試す →
+      <main>
+        <section className="lp-hero">
+          <div className="lp-hero-inner">
+            <p className="lp-hero-lead lp-fade">
+              素早く割り勘、
+              <br className="lp-br-sm" />
+              旅終わりのドライバーさんへ
+            </p>
+            <h1 className="lp-hero-title lp-fade">
+              ETC・ガソリン代・運転手優遇を
+              <br />
+              その場で計算して、その場で集金。
+            </h1>
+            <p className="lp-hero-desc lp-fade">
+              経路を入れるだけで高速料金を自動取得。人数と運転手の負担率を設定すれば、全員の支払い額がすぐに出ます。PayPay で請求リンクを送って集金まで完了できます。
+            </p>
+            <div className="lp-hero-actions lp-fade">
+              <Link href="/" className="lp-btn">
+                無料ではじめる
+              </Link>
+            </div>
+            <ul className="lp-hero-tags lp-fade">
+              <li>ETC 時間帯割引</li>
+              <li>Google Maps 連携</li>
+              <li>運転手傾斜割り勘</li>
+              <li>PayPay 即時請求</li>
+            </ul>
+          </div>
+        </section>
+
+        <section className="lp-section lp-section--alt">
+          <div className="lp-container">
+            <h2 className="lp-section-title lp-fade">こんなとき、ありませんか？</h2>
+            <p className="lp-section-intro lp-fade">楽しかったドライブも、帰り道のお金の話で気まずくなっていませんか。</p>
+            <ul className="lp-problem-list">
+              <li className="lp-problem-item">
+                <span className="lp-problem-icon">😓</span>
+                <div className="lp-problem-body">
+                  <strong>傾斜計算が面倒</strong>
+                  <p>運転手に多く負担してほしいけど、計算が難しくて結局均等割りに。気を使って損してしまう。</p>
+                </div>
+              </li>
+              <li className="lp-problem-item">
+                <span className="lp-problem-icon">🛣️</span>
+                <div className="lp-problem-body">
+                  <strong>ETC料金がその場でわからない</strong>
+                  <p>高速料金はあとで明細を見るまで正確にはわからない。その場でみんなに説明できない。</p>
+                </div>
+              </li>
+              <li className="lp-problem-item">
+                <span className="lp-problem-icon">💸</span>
+                <div className="lp-problem-body">
+                  <strong>集金が遅れる</strong>
+                  <p>「あとで払う」が続いて、結局運転手がずっと立て替えたまま。催促するのも気まずい。</p>
+                </div>
+              </li>
+            </ul>
+          </div>
+        </section>
+
+        <section className="lp-section">
+          <div className="lp-container">
+            <h2 className="lp-section-title lp-fade">Warikan Drive でできること</h2>
+            <p className="lp-section-intro lp-fade">出発前に負担額を確定して、その場で集金まで。</p>
+            <ul className="lp-feature-list">
+              <li className="lp-feature-item">
+                <span className="lp-feature-icon">🗺️</span>
+                <div className="lp-feature-body">
+                  <h3>経路と料金を自動取得</h3>
+                  <p>出発地・目的地・出発時刻を入れると、Google Maps で複数経路を比較。ETC/現金・時間帯割引（深夜・休日）を出発時刻から自動で反映します。</p>
+                </div>
+              </li>
+              <li className="lp-feature-item">
+                <span className="lp-feature-icon">🚗</span>
+                <div className="lp-feature-body">
+                  <h3>運転手傾斜割り勘</h3>
+                  <p>スライダーで運転手の負担係数を設定。ガソリン代・高速代・追加費用をまとめて、公平に計算します。</p>
+                </div>
+              </li>
+              <li className="lp-feature-item">
+                <span className="lp-feature-icon">📅</span>
+                <div className="lp-feature-body">
+                  <h3>日別・複数ルート管理</h3>
+                  <p>ドライブプランごとに日付とルートを管理。駐車場・レンタカー代も合算でき、複数日の旅行にも対応しています。</p>
+                </div>
+              </li>
+              <li className="lp-feature-item">
+                <span className="lp-feature-icon">📱</span>
+                <div className="lp-feature-body">
+                  <h3>Google Maps ナビ連携</h3>
+                  <p>選んだルートをそのまま Google Maps で開いてナビ起動。アプリを切り替える手間がありません。</p>
+                </div>
+              </li>
+              <li className="lp-feature-item">
+                <span className="lp-feature-icon">💴</span>
+                <div className="lp-feature-body">
+                  <h3>PayPay で即時請求</h3>
+                  <p>計算結果から PayPay の請求リンクを発行。メンバーに送って、その場で集金を終わらせられます。</p>
+                </div>
+              </li>
+              <li className="lp-feature-item">
+                <span className="lp-feature-icon">🌙</span>
+                <div className="lp-feature-body">
+                  <h3>ダーク / ライトモード</h3>
+                  <p>夜ドライブでも目に優しいダークモード。スマホでも使いやすいように調整しています。</p>
+                </div>
+              </li>
+            </ul>
+          </div>
+        </section>
+
+        <section className="lp-section lp-section--steps">
+          <div className="lp-container">
+            <h2 className="lp-section-title lp-fade">使い方</h2>
+            <p className="lp-section-intro lp-fade">難しい設定は不要。経路を入れたらあとは自動です。</p>
+            <ol className="lp-steps">
+              <li className="lp-step">ルート（出発地・目的地・出発時刻）を入力</li>
+              <li className="lp-step">経路候補から使うルートを選択</li>
+              <li className="lp-step">人数・燃費・運転手優遇率を設定</li>
+              <li className="lp-step">割り勘を計算 → 全員の負担額が確定</li>
+            </ol>
+            <div className="lp-demo lp-fade">
+              <p className="lp-demo-label">例：東京駅 → 箱根（4人・ETC・運転手優遇70%）</p>
+              <p className="lp-demo-route">東京駅 → 箱根 · 95.2 km</p>
+              <div className="lp-demo-stats">
+                <span>総コスト <strong>¥5,840</strong></span>
+                <span>運転手 <strong>¥1,120</strong></span>
+                <span>同乗者×3 <strong>¥1,573</strong></span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="lp-cta">
+          <div className="lp-cta-inner lp-container">
+            <p className="lp-cta-lead lp-fade">ドライブのあとの「いくらだった？」を、その場で解決。</p>
+            <Link href="/" className="lp-btn lp-btn--large lp-fade">
+              無料ではじめる
             </Link>
-            <a href="#features" className="lp-btn-ghost">
-              機能一覧
-            </a>
+            <p className="lp-cta-note lp-fade">会員登録は無料。ログインしてすぐ使えます。</p>
           </div>
-          <div className="lp-hero-badges">
-            <span className="lp-hero-badge">🛣️ ETC 時間帯割引 自動計算</span>
-            <span className="lp-hero-badge">📍 Google Maps 連携</span>
-            <span className="lp-hero-badge">🚗 運転手傾斜割り勘</span>
-            <span className="lp-hero-badge">💴 PayPay 即時請求</span>
-          </div>
-        </div>
-      </section>
-
-      <section id="problem" className="lp-section lp-section-alt">
-        <div className="lp-container">
-          <div className="lp-section-header lp-fade-up">
-            <span className="lp-tag">Problem</span>
-            <h2 className="lp-section-title">ドライブ後の3つの悩み</h2>
-            <p className="lp-section-sub">
-              楽しかった旅も、帰り道のお金の計算で気まずくなっていませんか？
-            </p>
-          </div>
-          <div className="lp-problem-grid">
-            <div className="lp-problem-card lp-fade-up">
-              <div className="lp-problem-icon">😓</div>
-              <div className="lp-problem-title">傾斜計算が面倒</div>
-              <div className="lp-problem-desc">
-                運転手に多く負担してほしいけど、計算が難しくて結局均等割りに。気を使って損してしまう。
-              </div>
-            </div>
-            <div className="lp-problem-card lp-fade-up">
-              <div className="lp-problem-icon">🛣️</div>
-              <div className="lp-problem-title">ETC料金がわからない</div>
-              <div className="lp-problem-desc">
-                高速料金はあとで明細を見るまで正確にはわからない。その場でみんなに説明できない。
-              </div>
-            </div>
-            <div className="lp-problem-card lp-fade-up">
-              <div className="lp-problem-icon">💸</div>
-              <div className="lp-problem-title">集金が遅れる</div>
-              <div className="lp-problem-desc">
-                「あとで払う」が続いて、結局運転手がずっと立て替えたまま。催促するのも気まずい。
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section id="features" className="lp-section">
-        <div className="lp-container">
-          <div className="lp-section-header lp-fade-up">
-            <span className="lp-tag">Features</span>
-            <h2 className="lp-section-title">Warikan Drive が全部解決</h2>
-            <p className="lp-section-sub">
-              出発前に全員の負担金額を確定。その場で集金まで完結。
-            </p>
-          </div>
-          <div className="lp-features-grid">
-            {[
-              {
-                num: "01",
-                icon: "🗺️",
-                title: "経路 × 料金を自動取得",
-                desc: "Google Maps Routes APIで複数経路を比較。ETC/現金・時間帯割引（深夜・休日）を出発時刻から自動反映。",
-              },
-              {
-                num: "02",
-                icon: "🚗",
-                title: "運転手傾斜割り勘",
-                desc: "スライダーで運転手の負担係数を設定。ガソリン代 + 高速代 + 追加費用をまとめて公平に計算。",
-              },
-              {
-                num: "03",
-                icon: "📅",
-                title: "日別 × 複数ルート管理",
-                desc: "旅行ごとに日付・ルートを管理。駐車場・レンタカー・カーシェア代も合算。複数日の旅行も対応。",
-              },
-              {
-                num: "04",
-                icon: "📱",
-                title: "Google Maps ナビ連携",
-                desc: "選択したルートをそのままGoogle Mapsで開いてナビ起動。アプリを切り替える手間ゼロ。",
-              },
-              {
-                num: "05",
-                icon: "💴",
-                title: "PayPay 即時請求",
-                desc: "計算結果から即座にPayPay請求リンクを発行。メンバー全員に一斉送信で集金を完結。",
-              },
-              {
-                num: "06",
-                icon: "🌙",
-                title: "ダーク / ライトモード",
-                desc: "夜のドライブでも目に優しいダークモード搭載。スマホ最適化で車内でもサクサク使える。",
-              },
-            ].map((f) => (
-              <div key={f.num} className="lp-feature-card lp-fade-up">
-                <div className="lp-feature-num">FEATURE {f.num}</div>
-                <div className="lp-feature-icon">{f.icon}</div>
-                <div className="lp-feature-title">{f.title}</div>
-                <div className="lp-feature-desc">{f.desc}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section id="how" className="lp-section lp-section-alt">
-        <div className="lp-container">
-          <div className="lp-section-header lp-fade-up">
-            <span className="lp-tag">How it works</span>
-            <h2 className="lp-section-title">使い方は 4 ステップ</h2>
-            <p className="lp-section-sub">
-              難しい設定は不要。目的地を入れるだけで、あとは全自動。
-            </p>
-          </div>
-          <div className="lp-steps lp-fade-up">
-            {[
-              { icon: "📍", title: "ルート入力", desc: "出発地・目的地・出発時刻を入力" },
-              { icon: "🔍", title: "経路選択", desc: "複数候補から最適なルートを選ぶ" },
-              { icon: "⚙️", title: "人数・設定", desc: "人数・燃費・運転手優遇率を設定" },
-              { icon: "💰", title: "割り勘 完了", desc: "全員の負担金額が一発で確定" },
-            ].map((s) => (
-              <div key={s.title} className="lp-step">
-                <div className="lp-step-circle">{s.icon}</div>
-                <div className="lp-step-title">{s.title}</div>
-                <div className="lp-step-desc">{s.desc}</div>
-              </div>
-            ))}
-          </div>
-          <div className="lp-result-demo lp-fade-up">
-            <div className="lp-result-demo-title">
-              計算例：東京駅 → 箱根（4人・ETC・運転手優遇70%）
-            </div>
-            <div className="lp-result-demo-route">🗺 東京駅 → 箱根 · 95.2 km</div>
-            <div className="lp-result-stats">
-              <div className="lp-result-stat">
-                <div className="lp-result-stat-label">総コスト</div>
-                <div className="lp-result-stat-val lp-accent">¥5,840</div>
-              </div>
-              <div className="lp-sep" />
-              <div className="lp-result-stat">
-                <div className="lp-result-stat-label">🚗 運転手</div>
-                <div className="lp-result-stat-val lp-green">¥1,120</div>
-              </div>
-              <div className="lp-sep" />
-              <div className="lp-result-stat">
-                <div className="lp-result-stat-label">🧑 同乗者 × 3</div>
-                <div className="lp-result-stat-val">¥1,573</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section id="stack" className="lp-section">
-        <div className="lp-container">
-          <div className="lp-section-header lp-fade-up">
-            <span className="lp-tag">Tech Stack</span>
-            <h2 className="lp-section-title">技術スタック</h2>
-            <p className="lp-section-sub">モダンな技術で、完全無料でデプロイ。</p>
-          </div>
-          <div className="lp-stack-grid lp-fade-up">
-            {[
-              { layer: "Frontend", tech: "Next.js 14 + TypeScript", badge: "Vercel 無料" },
-              { layer: "Styling", tech: "Tailwind CSS + shadcn/ui" },
-              { layer: "Backend", tech: "FastAPI (Python 3.11)", badge: "Vercel 無料" },
-              { layer: "Database", tech: "PostgreSQL (Supabase)", badge: "無料" },
-              { layer: "外部 API", tech: "Google Maps Routes API" },
-              { layer: "決済", tech: "PayPay API" },
-              { layer: "環境管理", tech: "Docker / docker-compose" },
-              { layer: "CI / CD", tech: "GitHub Actions" },
-            ].map((r) => (
-              <div key={r.layer} className="lp-stack-row">
-                <div className="lp-stack-layer">{r.layer}</div>
-                <div className="lp-stack-tech">{r.tech}</div>
-                {r.badge && (
-                  <span className="lp-stack-badge">{r.badge}</span>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section id="cta" className="lp-cta">
-        <div className="lp-cta-bg" />
-        <div className="lp-cta-content lp-fade-up">
-          <span className="lp-cta-car">🚗</span>
-          <h2 className="lp-cta-title">Warikan Drive</h2>
-          <p className="lp-cta-sub">素早く割り勘、旅終わりのドライバーさんへ。</p>
-          <div className="lp-cta-pills">
-            <span className="lp-cta-pill">🛣️ ETC 時間帯割引 自動計算</span>
-            <span className="lp-cta-pill">🚗 運転手傾斜割り勘</span>
-            <span className="lp-cta-pill">📍 Google Maps 連携</span>
-            <span className="lp-cta-pill">💴 PayPay 即時請求</span>
-          </div>
-          <Link href="/" className="lp-btn-primary lp-btn-cta">
-            今すぐ試す →
-          </Link>
-        </div>
-      </section>
+        </section>
+      </main>
 
       <footer className="lp-footer">
-        <div className="lp-footer-logo">🚗 Warikan Drive</div>
-        <div className="lp-footer-sub">Built with ❤️ for Hackathon 2026</div>
+        <div className="lp-container">
+          <p className="lp-footer-logo">Warikan Drive</p>
+          <p className="lp-footer-copy">Hackathon 2026</p>
+        </div>
       </footer>
     </div>
   );
