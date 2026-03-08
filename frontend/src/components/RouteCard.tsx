@@ -96,7 +96,6 @@ export function RouteCard({
         )}
       </div>
       <div className="mb-3 flex items-center gap-3">
-        <span className="text-sm font-medium text-label">⏰ 時刻</span>
         <div className="inline-flex rounded-2xl border border-border bg-inputBg p-1 text-xs">
           <button
             type="button"
@@ -207,13 +206,21 @@ export function RouteCard({
           onClick={handleSearch}
           disabled={!route.origin || !route.destination || loading}
           variant="ghost"
-          className="flex-1 text-xs hover:!border-accent hover:!bg-accentDim hover:text-white active:!border-accent active:text-white active:shadow-glow"
+          className="flex-1 text-xs hover:!border-accent hover:!bg-accentDim active:!border-accent active:shadow-glow"
         >
-          {loading
-            ? "検索中…"
-            : hasSearched
-              ? "🔄 再検索"
-              : "🔍 経路を検索"}
+          {loading ? (
+            <span className="inline-flex items-center gap-2">
+              <span
+                className="h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-white/30 border-t-white"
+                aria-hidden
+              />
+              検索中…
+            </span>
+          ) : hasSearched ? (
+            "🔄 再検索"
+          ) : (
+            "🔍 経路を検索"
+          )}
         </Button>
         {/* <Button
         onClick={() => setOpen((o) => !o)}
@@ -232,8 +239,8 @@ export function RouteCard({
         variant="ghost"
         className={`flex-1 text-xs ${
           selected
-            ? "!border-green !bg-green text-white shadow-glow hover:!border-green hover:!bg-green hover:text-white hover:shadow-glow"
-            : "hover:bg-greenDim hover:text-white hover:border-green hover:shadow-glow"
+            ? "!border-green !bg-green text-white shadow-glow hover:!border-green hover:!bg-green hover:shadow-glow"
+            : "hover:bg-greenDim hover:border-green hover:shadow-glow"
         }`}
         disabled={segments.length === 0}
         >
