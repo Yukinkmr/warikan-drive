@@ -33,7 +33,7 @@ export default function TripDetailPage({ params }: PageProps) {
   const [loadingRouteId, setLoadingRouteId] = useState<string | null>(null);
   const [includeRouteIds, setIncludeRouteIds] = useState<string[]>([]);
   const [isAddingRoute, setIsAddingRoute] = useState(false);
-  const [payment, setPayment] = useState<PaymentMethod>("ETC");
+  const [routePaymentById, setRoutePaymentById] = useState<Record<string, PaymentMethod>>({});
   const [loading, setLoading] = useState(true);
   const [loadingRouteCards, setLoadingRouteCards] = useState(true);
   const [activeView, setActiveView] = useState<"detail" | "split" | "payments">(() => {
@@ -68,7 +68,6 @@ export default function TripDetailPage({ params }: PageProps) {
     try {
       const t = await tripsApi.get(tripId);
       setTrip(t);
-      setPayment((t.payment_method as PaymentMethod) || "ETC");
     } catch {
       setTrip(null);
     }
@@ -83,6 +82,18 @@ export default function TripDetailPage({ params }: PageProps) {
         list.map(async (day) => [day.id, await routesApi.list(day.id)] as const)
       );
       const nextRoutes = Object.fromEntries(routeEntries);
+      setRoutePaymentById((prev) => {
+        const next = { ...prev };
+        const defaultPayment = (trip?.payment_method as PaymentMethod) || "ETC";
+        Object.values(nextRoutes)
+          .flat()
+          .forEach((route) => {
+            if (!next[route.id]) {
+              next[route.id] = defaultPayment;
+            }
+          });
+        return next;
+      });
       const selectedRoutes = routeEntries.flatMap(([, routes]) =>
         routes.filter((route) => route.selected_segment_id)
       );
@@ -109,7 +120,7 @@ export default function TripDetailPage({ params }: PageProps) {
     } catch {
       setDays([]);
     }
-  }, [tripId]);
+  }, [tripId, trip?.payment_method]);
 
   useEffect(() => {
     if (authLoading) return;
@@ -341,7 +352,7 @@ export default function TripDetailPage({ params }: PageProps) {
   );
 
   const searchRoute = useCallback(
-    async (dayId: string, routeId: string) => {
+    async (dayId: string, routeId: string, paymentMethod: PaymentMethod) => {
       const route = (routesByDayId[dayId] ?? []).find((r) => r.id === routeId);
       if (!route || !trip) return;
       const dep =
@@ -351,7 +362,7 @@ export default function TripDetailPage({ params }: PageProps) {
       try {
         const { segments } = await routesApi.search(routeId, {
           departure_time: dep,
-          payment_method: trip.payment_method,
+          payment_method: paymentMethod,
           time_type: route.time_type ?? "DEPARTURE",
         });
         setSegmentsByRouteId((prev) => ({ ...prev, [routeId]: segments }));
@@ -595,7 +606,7 @@ export default function TripDetailPage({ params }: PageProps) {
                 key={item.route.id}
                 route={item.route}
                 idx={item.index}
-                payment={payment}
+                payment={routePaymentById[item.route.id] ?? ((trip.payment_method as PaymentMethod) || "ETC")}
                 segments={segmentsByRouteId[item.route.id] ?? []}
                 loading={loadingRouteId === item.route.id}
                 dayDate={item.day.date}
@@ -604,13 +615,15 @@ export default function TripDetailPage({ params }: PageProps) {
                   updateRoute(routeId, "day_date", value)
                 }
                 onRemove={() => removeRoute(item.day.id, item.route.id)}
-                onSearch={() => searchRoute(item.day.id, item.route.id)}
+                onSearch={(paymentMethod) => searchRoute(item.day.id, item.route.id, paymentMethod)}
                 onSelectSeg={(segId: string) => selectSeg(item.route.id, segId)}
                 selected={includeRouteIds.includes(item.route.id)}
                 onToggle={() => toggleInclude(item.route.id)}
                 onPaymentChange={(nextPayment: PaymentMethod) => {
-                  setPayment(nextPayment);
-                  tripsApi.update(tripId, { payment_method: nextPayment }).then(loadTrip);
+                  setRoutePaymentById((prev) => ({
+                    ...prev,
+                    [item.route.id]: nextPayment,
+                  }));
                 }}
               />
             ))}

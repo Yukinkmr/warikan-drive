@@ -33,7 +33,7 @@ export function RouteCard({
   onUpdate: (routeId: string, field: string, value: string | boolean) => void;
   onUpdateDate: (routeId: string, value: string) => void;
   onRemove: (() => void) | null;
-  onSearch: () => void | Promise<void>;
+  onSearch: (payment: PaymentMethod) => void | Promise<void>;
   onSelectSeg: (segmentId: string) => void;
   selected: boolean;
   onToggle: () => void;
@@ -56,7 +56,7 @@ export function RouteCard({
   
 
   async function handleSearch() {
-    await Promise.resolve(onSearch());
+    await Promise.resolve(onSearch(payment));
     setHasSearched(true);
     setOpen(true);
   }
