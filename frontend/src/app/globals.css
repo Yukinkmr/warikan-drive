@@ -51,7 +51,7 @@
 }
 
 [data-theme="light"] {
-  --bg: #f8fafc;
+  --bg: #e4ebf3;
   --surface: #ffffff;
   --card: #ffffff;
   --border: #e5e7eb;
@@ -91,10 +91,10 @@
   --auth-shadow: 0 8px 32px rgba(15, 23, 42, 0.08);
 }
 
-[data-theme="light"] main,
-[data-theme="light"] .auth-screen {
+/* [data-theme="light"] main, */
+/* [data-theme="light"] .auth-screen {
   background-color: #e4ebf3;
-}
+} */
 
 body {
   font-family: "Inter", ui-sans-serif, system-ui, sans-serif;

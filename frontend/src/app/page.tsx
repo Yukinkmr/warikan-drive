@@ -408,12 +408,12 @@ export default function HomePage() {
     <div className="flex h-screen w-full min-w-0 flex-col bg-bg text-text md:flex md:justify-center">
       <div className="mx-auto flex min-h-0 w-full min-w-0 flex-1 flex-col max-w-app md:max-w-app-md lg:max-w-app-lg xl:max-w-app-xl">
         <header
-          className="shrink-0 border-b border-white/10 px-4 pt-5 pb-5 sm:px-5 sm:pt-6 md:px-6 lg:px-8 lg:pt-7"
-          style={{ background: "var(--header-bg)" }}
+          className="shrink-0 border-b border-muted px-4 pt-5 pb-5 sm:px-5 sm:pt-6 md:px-6 lg:px-8 lg:pt-7"
+        //   style={{ background: "var(--header-bg)" }}
         >
           <div className="flex items-center justify-between gap-4">
             <div className="min-w-0 flex-1">
-              <h1 className="text-lg font-bold tracking-tight text-white sm:text-xl">
+              <h1 className="text-lg font-bold tracking-tight text-text sm:text-xl">
                 <span className="whitespace-nowrap">{user.name}</span>
                 {" "}
                 <span className="whitespace-nowrap">のプラン一覧</span>
@@ -426,7 +426,7 @@ export default function HomePage() {
               <button
                 type="button"
                 onClick={() => setIsSettingsOpen(true)}
-                className="rounded-lg border border-white/15 p-1.5 text-white/80 transition-all duration-200 ease-out hover:scale-105 hover:border-white/30 hover:text-white active:scale-95 sm:rounded-xl sm:p-2"
+                className="rounded-lg border border-muted p-1.5 text-text/80 transition-all duration-200 ease-out hover:scale-105 hover:border-muted hover:text-text active:scale-95 sm:rounded-xl sm:p-2"
                 aria-label="設定"
               >
                 <svg className="h-4 w-4 sm:h-5 sm:w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

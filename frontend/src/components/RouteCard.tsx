@@ -164,7 +164,7 @@ export function RouteCard({
               onChange={(e) => onUpdate(route.id, "use_highways", e.target.checked === false)}
               className="h-4 w-4 accent-accent"
             />
-            高速道路を利用しない
+            <span className="text-sm font-medium text-label">高速道路を利用しない</span>
           </label>
           <label className="flex items-center gap-3 text-sm text-text">
             <input
@@ -173,7 +173,7 @@ export function RouteCard({
               onChange={(e) => onUpdate(route.id, "use_tolls", e.target.checked === false)}
               className="h-4 w-4 accent-accent"
             />
-            有料道路を利用しない
+            <span className="text-sm font-medium text-label">有料道路を利用しない</span>
           </label>
         </div>
         <div className="mb-3 h-px bg-border" />

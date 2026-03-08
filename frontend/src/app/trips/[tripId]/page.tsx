@@ -511,13 +511,13 @@ export default function TripDetailPage({ params }: PageProps) {
     <div className="min-h-screen w-full min-w-0 bg-bg text-text md:flex md:justify-center">
       <div className="mx-auto w-full min-w-0 max-w-app md:max-w-app-md lg:max-w-app-lg xl:max-w-app-xl">
         <header
-          className="border-b border-white/10 px-4 pt-5 pb-0 sm:px-5 sm:pt-6 md:px-6 lg:px-8 lg:pt-7"
-          style={{ background: "var(--header-bg)" }}
+          className="border-b border-muted px-1 pt-5 pb-0 sm:px-5 sm:pt-6 md:px-6 lg:px-8 lg:pt-7"
+          // style={{ background: "var(--header-bg)" }}
         >
           <div className="flex items-center justify-between">
             <Link
               href="/"
-              className="text-xs font-medium text-white/80 transition-colors hover:text-white sm:text-sm"
+              className="text-xs font-medium transition-colors hover:text-accent sm:text-sm"
             >
               ← 一覧
             </Link>
@@ -530,13 +530,13 @@ export default function TripDetailPage({ params }: PageProps) {
               🚗
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/55">
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted">
                 Trip
               </p>
-              <h1 className="mt-1 truncate text-xl font-bold tracking-tight text-white sm:text-2xl md:text-[1.65rem]">
+              <h1 className="mt-1 truncate text-xl font-bold tracking-tight sm:text-2xl md:text-[1.65rem]">
                 {trip.name}
               </h1>
-              <p className="mt-0.5 text-xs text-white/70 sm:text-sm">ルート管理</p>
+              <p className="mt-0.5 text-xs sm:text-sm text-muted">ルート管理</p>
             </div>
           </div>
           <nav className="mt-4 flex sm:mt-5" role="tablist">
@@ -545,8 +545,8 @@ export default function TripDetailPage({ params }: PageProps) {
               onClick={() => setActiveView("detail")}
               className={`flex-1 border-b-2 py-3 text-center text-sm font-medium transition-colors sm:py-3.5 ${
                 activeView === "detail"
-                  ? "border-white text-white font-semibold"
-                  : "border-transparent text-white/60 hover:text-white"
+                  ? "border-text text-text font-semibold"
+                  : "border-transparent text-muted hover:text-text"
               }`}
               role="tab"
               aria-selected={activeView === "detail"}
@@ -558,8 +558,8 @@ export default function TripDetailPage({ params }: PageProps) {
               onClick={() => setActiveView("split")}
               className={`flex-1 border-b-2 py-3 text-center text-sm font-medium transition-colors sm:py-3.5 ${
                 activeView === "split"
-                  ? "border-white text-white font-semibold"
-                  : "border-transparent text-white/60 hover:text-white"
+                  ? "border-text text-text font-semibold"
+                  : "border-transparent text-muted hover:text-text"
               }`}
               role="tab"
               aria-selected={activeView === "split"}
@@ -571,8 +571,8 @@ export default function TripDetailPage({ params }: PageProps) {
               onClick={() => setActiveView("payments")}
               className={`flex-1 border-b-2 py-3 text-center text-sm font-medium transition-colors sm:py-3.5 ${
                 activeView === "payments"
-                  ? "border-white text-white font-semibold"
-                  : "border-transparent text-white/60 hover:text-white"
+                  ? "border-text text-text font-semibold"
+                  : "border-transparent text-muted hover:text-text"
               }`}
               role="tab"
               aria-selected={activeView === "payments"}
