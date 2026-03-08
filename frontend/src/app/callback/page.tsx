@@ -3,6 +3,7 @@
 import { Suspense, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
+import { LoadingMessage } from "@/components/ui/LoadingMessage";
 import { useAuth } from "@/contexts/AuthContext";
 
 const GOOGLE_STATE_STORAGE_KEY = "warikan-drive-google-state";
@@ -75,7 +76,7 @@ export default function CallbackPage() {
       <Suspense
         fallback={
           <div className="w-full max-w-app rounded-card border border-border bg-card p-6 text-center shadow-card md:max-w-app-md">
-            <p className="text-sm text-muted">読み込み中…</p>
+            <LoadingMessage />
           </div>
         }
       >

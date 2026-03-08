@@ -10,6 +10,7 @@ import type { Trip, Day, Route, RouteSegment } from "@/types";
 import type { PaymentMethod } from "@/types";
 import { RouteCard } from "@/components/RouteCard";
 import { Button } from "@/components/ui/Button";
+import { LoadingMessage } from "@/components/ui/LoadingMessage";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { SplitView } from "@/app/trips/[tripId]/SplitView";
 import { PaymentStatusView } from "@/app/trips/[tripId]/PaymentStatusView";
@@ -611,7 +612,7 @@ export default function TripDetailPage({ params }: PageProps) {
     return (
       <div className="flex min-h-screen w-full items-center justify-center bg-bg p-4 text-text">
         <div className="w-full max-w-app text-center md:max-w-app-md">
-          <p className="text-muted">読み込み中…</p>
+          <LoadingMessage />
         </div>
       </div>
     );
@@ -626,7 +627,7 @@ export default function TripDetailPage({ params }: PageProps) {
       <div className="flex min-h-screen w-full items-center justify-center bg-bg p-4 text-text">
         <div className="w-full max-w-app text-center md:max-w-app-md">
           {loading || (trip && loadingRouteCards) ? (
-            <p className="text-muted">読み込み中…</p>
+            <LoadingMessage />
           ) : (
             <div>
               <p className="text-muted">プランが見つかりません</p>

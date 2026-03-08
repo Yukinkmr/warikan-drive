@@ -7,6 +7,7 @@ import { formatYen } from "@/lib/utils";
 import { Card } from "@/components/ui/Card";
 import { Label } from "@/components/ui/Label";
 import { Button } from "@/components/ui/Button";
+import { LoadingMessage } from "@/components/ui/LoadingMessage";
 
 function formatDateTime(value: string | null): string {
   if (!value) return "";
@@ -182,7 +183,7 @@ export function PaymentStatusView({ tripId }: { tripId: string }) {
   if (loading) {
     return (
       <div className="flex min-h-[200px] items-center justify-center text-sm text-muted">
-        読み込み中…
+        <LoadingMessage />
       </div>
     );
   }

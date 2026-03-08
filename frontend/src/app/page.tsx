@@ -7,6 +7,7 @@ import { tripsApi } from "@/lib/api";
 import type { Trip } from "@/types";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Settings } from "@/components/Settings";
+import { LoadingMessage } from "@/components/ui/LoadingMessage";
 import { useAuth } from "@/contexts/AuthContext";
 
 const PASSWORD_RULE = /^(?=.*[A-Za-z])(?=.*\d).{8,}$/;
@@ -203,7 +204,7 @@ export default function HomePage() {
   if (authLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-bg p-4 text-text">
-        <p className="text-sm text-muted">読み込み中…</p>
+        <LoadingMessage />
       </div>
     );
   }
@@ -521,7 +522,7 @@ export default function HomePage() {
 
           {loadingTrips ? (
             <div className="rounded-2xl border border-border bg-card px-4 py-8 text-center text-sm text-muted">
-              読み込み中…
+              <LoadingMessage className="text-sm" />
             </div>
           ) : trips.length === 0 ? (
             <>

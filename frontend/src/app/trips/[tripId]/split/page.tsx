@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { tripsApi } from "@/lib/api";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { LoadingMessage } from "@/components/ui/LoadingMessage";
 import { useAuth } from "@/contexts/AuthContext";
 import { SplitView } from "../SplitView";
 
@@ -35,7 +36,7 @@ export default function SplitPage({ params }: PageProps) {
     return (
       <div className="flex min-h-screen w-full items-center justify-center bg-bg p-4 text-text">
         <div className="w-full max-w-app text-center md:max-w-app-md">
-          <p className="text-muted">読み込み中…</p>
+          <LoadingMessage />
         </div>
       </div>
     );
@@ -46,7 +47,7 @@ export default function SplitPage({ params }: PageProps) {
       <div className="flex min-h-screen w-full items-center justify-center bg-bg p-4 text-text">
         <div className="w-full max-w-app text-center md:max-w-app-md">
           {loading ? (
-            <p className="text-muted">読み込み中…</p>
+            <LoadingMessage />
           ) : (
             <div>
               <p className="text-muted">プランが見つかりません</p>
