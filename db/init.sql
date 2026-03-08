@@ -62,7 +62,7 @@ CREATE TABLE routes (
   distance_km DECIMAL(7,2),
   toll_yen INT DEFAULT 0,
   fuel_yen INT DEFAULT 0,
-  is_include_split BOOLEAN DEFAULT true,
+  is_include_split BOOLEAN DEFAULT false,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );

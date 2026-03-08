@@ -3,7 +3,7 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { daysApi, routesApi, tripsApi } from "@/lib/api";
+import { tripsApi } from "@/lib/api";
 import type { Trip } from "@/types";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Settings } from "@/components/Settings";
@@ -114,8 +114,6 @@ export default function HomePage() {
         gas_price: 170,
         driver_weight: 0.5,
       });
-      const day = await daysApi.create(trip.id, { date: todayStr() });
-      await routesApi.create(day.id, { origin: "", destination: "" });
       setShowCreateModal(false);
       setNewTripName("");
       router.push(`/trips/${trip.id}`);

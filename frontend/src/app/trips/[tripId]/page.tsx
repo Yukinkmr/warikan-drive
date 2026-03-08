@@ -50,6 +50,8 @@ export default function TripDetailPage({ params }: PageProps) {
       destination: current.destination,
       departure_time: current.departure_time,
       time_type: current.time_type,
+      use_highways: current.use_highways,
+      use_tolls: current.use_tolls,
     }),
     []
   );
@@ -378,21 +380,32 @@ export default function TripDetailPage({ params }: PageProps) {
       const route = (routesByDayId[day.id] ?? []).find((r) => r.id === routeId);
       if (!route) return;
       const nextInclude = !route.is_include_split;
+
+      // 楽観的更新
+      setRoutesByDayId((prev) => ({
+        ...prev,
+        [day.id]: (prev[day.id] ?? []).map((r) =>
+          r.id === routeId ? { ...r, is_include_split: nextInclude } : r
+        ),
+      }));
+      setIncludeRouteIds((ids) =>
+        nextInclude ? [...ids, routeId] : ids.filter((id) => id !== routeId)
+      );
       try {
         await routesApi.update(day.id, routeId, {
           is_include_split: nextInclude,
         });
+      } catch {
+        // ロールバック
         setRoutesByDayId((prev) => ({
           ...prev,
           [day.id]: (prev[day.id] ?? []).map((r) =>
-            r.id === routeId ? { ...r, is_include_split: nextInclude } : r
+            r.id === routeId ? { ...r, is_include_split: !nextInclude } : r
           ),
         }));
         setIncludeRouteIds((ids) =>
-          nextInclude ? [...ids, routeId] : ids.filter((id) => id !== routeId)
+          !nextInclude ? [...ids, routeId] : ids.filter((id) => id !== routeId)
         );
-      } catch {
-        // ignore
       }
     },
     [days, routesByDayId]
