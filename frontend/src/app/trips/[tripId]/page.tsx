@@ -70,22 +70,28 @@ export default function TripDetailPage({ params }: PageProps) {
     try {
       const list = await daysApi.list(tripId);
       setDays(list);
-      const nextRoutes: Record<string, Route[]> = {};
-      const nextSegments: Record<string, RouteSegment[]> = {};
-      for (const d of list) {
-        const routes = await routesApi.list(d.id);
-        nextRoutes[d.id] = routes;
-        for (const r of routes) {
-          if (r.selected_segment_id) {
-            try {
-              const { segments } = await routesApi.listSegments(r.id);
-              nextSegments[r.id] = segments;
-            } catch {
-              // ignore
-            }
+      const routeEntries = await Promise.all(
+        list.map(async (day) => [day.id, await routesApi.list(day.id)] as const)
+      );
+      const nextRoutes = Object.fromEntries(routeEntries);
+      const selectedRoutes = routeEntries.flatMap(([, routes]) =>
+        routes.filter((route) => route.selected_segment_id)
+      );
+      const segmentEntries = await Promise.all(
+        selectedRoutes.map(async (route) => {
+          try {
+            const { segments } = await routesApi.listSegments(route.id);
+            return [route.id, segments] as const;
+          } catch {
+            return null;
           }
-        }
-      }
+        })
+      );
+      const nextSegments = Object.fromEntries(
+        segmentEntries.filter(
+          (entry): entry is readonly [string, RouteSegment[]] => entry !== null
+        )
+      );
       setRoutesByDayId(nextRoutes);
       setSegmentsByRouteId((prev) => ({ ...prev, ...nextSegments }));
       setIncludeRouteIds((_) =>
@@ -103,15 +109,8 @@ export default function TripDetailPage({ params }: PageProps) {
       return;
     }
     if (!tripId) return;
-    loadTrip().then(() => setLoading(false));
-  }, [authLoading, user, router, tripId, loadTrip]);
-
-  useEffect(() => {
-    if (!user || !tripId || !trip) return;
-    loadDays();
-    // trip?.id で「どのプランか」を追跡しており、trip オブジェクト全体は意図的に省略
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, tripId, trip?.id, loadDays]);
+    Promise.all([loadTrip(), loadDays()]).finally(() => setLoading(false));
+  }, [authLoading, user, router, tripId, loadTrip, loadDays]);
 
   useEffect(() => {
     return () => {
@@ -559,7 +558,13 @@ export default function TripDetailPage({ params }: PageProps) {
           }}
         >
         {activeView === "split" ? (
-          <SplitView tripId={tripId} />
+          <SplitView
+            tripId={tripId}
+            trip={trip}
+            days={days}
+            routesByDayId={routesByDayId}
+            segmentsByRouteId={segmentsByRouteId}
+          />
         ) : activeView === "payments" ? (
           <PaymentStatusView tripId={tripId} />
         ) : (

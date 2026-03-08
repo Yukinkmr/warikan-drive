@@ -3,7 +3,7 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { paymentsApi, splitsApi, tripsApi } from "@/lib/api";
+import { tripsApi } from "@/lib/api";
 import type { Trip } from "@/types";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Settings } from "@/components/Settings";
@@ -31,9 +31,6 @@ export default function HomePage() {
   const { user, loading: authLoading, login, register, logout, refreshUser } = useAuth();
   const [trips, setTrips] = useState<Trip[]>([]);
   const [loadingTrips, setLoadingTrips] = useState(false);
-  const [tripPaymentSummaryByTripId, setTripPaymentSummaryByTripId] = useState<
-    Record<string, { paidCount: number; pendingCount: number }>
-  >({});
   const [creating, setCreating] = useState(false);
   const [mode, setMode] = useState<"login" | "register">("login");
   const [name, setName] = useState("");
@@ -58,7 +55,6 @@ export default function HomePage() {
     if (!user) {
       setTrips([]);
       setLoadingTrips(false);
-      setTripPaymentSummaryByTripId({});
       return;
     }
 
@@ -69,47 +65,6 @@ export default function HomePage() {
       .catch(() => setTrips([]))
       .finally(() => setLoadingTrips(false));
   }, [user]);
-
-  useEffect(() => {
-    if (!user || trips.length === 0) {
-      setTripPaymentSummaryByTripId({});
-      return;
-    }
-
-    let cancelled = false;
-
-    Promise.all(
-      trips.map(async (trip) => {
-        try {
-          const split = await splitsApi.getLatest(trip.id);
-          const payments = await paymentsApi.list(split.id);
-          return {
-            tripId: trip.id,
-            paidCount: payments.filter((payment) => payment.status === "paid").length,
-            pendingCount: payments.filter((payment) => payment.status === "pending").length,
-          };
-        } catch {
-          return null;
-        }
-      })
-    ).then((results) => {
-      if (cancelled) return;
-      setTripPaymentSummaryByTripId(
-        Object.fromEntries(
-          results
-            .filter((result): result is { tripId: string; paidCount: number; pendingCount: number } => result !== null)
-            .map((result) => [
-              result.tripId,
-              { paidCount: result.paidCount, pendingCount: result.pendingCount },
-            ])
-        )
-      );
-    });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [user, trips]);
 
   const handleAuthSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -647,7 +602,10 @@ export default function HomePage() {
             <div className="h-full min-h-0 rounded-2xl border border-border bg-card p-2 sm:p-3 overflow-y-auto overflow-x-hidden">
               <div className="space-y-2">
               {filteredTrips.map((trip) => {
-                const paymentSummary = tripPaymentSummaryByTripId[trip.id];
+                const paymentSummary =
+                  trip.paid_count != null && trip.pending_count != null
+                    ? { paidCount: trip.paid_count, pendingCount: trip.pending_count }
+                    : null;
                 return (
                   <div
                     key={trip.id}

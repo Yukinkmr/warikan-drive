@@ -1,13 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import {
-  tripsApi,
-  daysApi,
-  routesApi,
-  extraCostsApi,
-  splitsApi,
-} from "@/lib/api";
+import { extraCostsApi, splitsApi } from "@/lib/api";
 import type {
   Trip,
   Day,
@@ -62,15 +56,21 @@ function ExtraCostForm({
   );
 }
 
-export function SplitView({ tripId }: { tripId: string }) {
-  const [trip, setTrip] = useState<Trip | null>(null);
-  const [days, setDays] = useState<Day[]>([]);
-  const [routesByDayId, setRoutesByDayId] = useState<Record<string, Route[]>>(
-    {}
-  );
-  const [segmentsByRouteId, setSegmentsByRouteId] = useState<
-    Record<string, RouteSegment[]>
-  >({});
+type SplitViewProps = {
+  tripId: string;
+  trip: Trip;
+  days: Day[];
+  routesByDayId: Record<string, Route[]>;
+  segmentsByRouteId: Record<string, RouteSegment[]>;
+};
+
+export function SplitView({
+  tripId,
+  trip,
+  days,
+  routesByDayId,
+  segmentsByRouteId,
+}: SplitViewProps) {
   const [extraCosts, setExtraCosts] = useState<ExtraCost[]>([]);
   const [splitResult, setSplitResult] = useState<Split | null>(null);
   const [calcLoading, setCalcLoading] = useState(false);
@@ -84,44 +84,6 @@ export function SplitView({ tripId }: { tripId: string }) {
   const payment = (trip?.payment_method as PaymentMethod) || "ETC";
   const paymentLabel = payment === "CASH" ? "現金" : "ETC";
 
-  const loadTrip = useCallback(async () => {
-    if (!tripId) return;
-    try {
-      const t = await tripsApi.get(tripId);
-      setTrip(t);
-    } catch {
-      setTrip(null);
-    }
-  }, [tripId]);
-
-  const loadDaysAndRoutes = useCallback(async () => {
-    if (!tripId) return;
-    try {
-      const list = await daysApi.list(tripId);
-      setDays(list);
-      const nextRoutes: Record<string, Route[]> = {};
-      const nextSegments: Record<string, RouteSegment[]> = {};
-      for (const d of list) {
-        const routes = await routesApi.list(d.id);
-        nextRoutes[d.id] = routes;
-        for (const r of routes) {
-          if (r.selected_segment_id && r.is_include_split) {
-            try {
-              const { segments } = await routesApi.listSegments(r.id);
-              nextSegments[r.id] = segments;
-            } catch {
-              // ignore
-            }
-          }
-        }
-      }
-      setRoutesByDayId(nextRoutes);
-      setSegmentsByRouteId(nextSegments);
-    } catch {
-      setDays([]);
-    }
-  }, [tripId]);
-
   const loadExtraCosts = useCallback(async () => {
     if (!tripId) return;
     try {
@@ -133,8 +95,8 @@ export function SplitView({ tripId }: { tripId: string }) {
   }, [tripId]);
 
   useEffect(() => {
-    loadTrip().then(() => setLoading(false));
-  }, [loadTrip]);
+    loadExtraCosts().finally(() => setLoading(false));
+  }, [loadExtraCosts]);
 
   useEffect(() => {
     if (!trip) return;
@@ -142,12 +104,6 @@ export function SplitView({ tripId }: { tripId: string }) {
     setGasPrice(Number(trip.gas_price) || 170);
     setDriverWeight(Number(trip.driver_weight) || 0.5);
   }, [trip]);
-
-  useEffect(() => {
-    if (!tripId) return;
-    loadDaysAndRoutes();
-    loadExtraCosts();
-  }, [tripId, loadDaysAndRoutes, loadExtraCosts]);
 
   const includedRoutes = days.flatMap((d) =>
     (routesByDayId[d.id] ?? []).filter(
@@ -205,7 +161,7 @@ export function SplitView({ tripId }: { tripId: string }) {
     [tripId]
   );
 
-  if (loading || !trip) {
+  if (loading) {
     return (
       <div className="flex min-h-[200px] items-center justify-center text-sm text-muted">
         読み込み中…

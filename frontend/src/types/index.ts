@@ -23,6 +23,8 @@ export interface Trip {
   driver_weight: number;
   created_at: string;
   updated_at: string;
+  paid_count?: number | null;
+  pending_count?: number | null;
 }
 
 export interface Day {
