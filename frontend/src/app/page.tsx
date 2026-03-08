@@ -693,6 +693,7 @@ export default function HomePage() {
                 </div>
               );
             }
+            if (!tripToEdit) return null;
             return (
               <div
                 className={`edit-popup-overlay fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 ${popupClosing ? "edit-popup-closing" : ""}`}
