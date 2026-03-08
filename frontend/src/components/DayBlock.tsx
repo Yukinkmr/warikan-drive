@@ -20,6 +20,7 @@ export function DayBlock({
   onSelectSeg,
   onToggleInclude,
   onRemoveDay,
+  onPaymentChange,
 }: {
   day: Day;
   routes: Route[];
@@ -27,13 +28,14 @@ export function DayBlock({
   segmentsByRouteId: Record<string, RouteSegment[]>;
   loadingRouteId: string | null;
   includeRouteIds: string[];
-  onUpdateRoute: (routeId: string, field: string, value: string) => void;
+  onUpdateRoute: (routeId: string, field: string, value: string | boolean) => void;
   onAddRoute: () => void;
   onRemoveRoute: (routeId: string) => void;
   onSearchRoute: (routeId: string) => void;
   onSelectSeg: (routeId: string, segmentId: string) => void;
   onToggleInclude: (routeId: string) => void;
   onRemoveDay: () => void;
+  onPaymentChange: (routeId: string, payment: PaymentMethod) => void;
 }) {
   return (
     <section className="mb-8">
@@ -73,6 +75,7 @@ export function DayBlock({
           onSelectSeg={(segId) => onSelectSeg(r.id, segId)}
           selected={includeRouteIds.includes(r.id)}
           onToggle={() => onToggleInclude(r.id)}
+          onPaymentChange={(payment) => onPaymentChange(r.id, payment)}
         />
       ))}
       </div>

@@ -21,6 +21,7 @@ const AuthContext = createContext<AuthContextValue>({
   loginWithGoogleCode: async () => {},
   register: async () => {},
   logout: () => {},
+  refreshUser: async () => {},
 });
 
 function storeSession(session: AuthResponse) {
