@@ -3,6 +3,7 @@
 import { use, useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { ReceiptJapaneseYen, Route as RouteIcon, User } from "lucide-react";
 import { tripsApi, daysApi, routesApi } from "@/lib/api";
 import type { Trip, Day, Route, RouteSegment } from "@/types";
 import type { PaymentMethod } from "@/types";
@@ -15,6 +16,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { todayStr } from "@/lib/utils";
 
 const SWIPE_THRESHOLD_PX = 60;
+const TAB_ICON_CLASS = "h-[17px] w-[17px] shrink-0 stroke-[2px]";
 
 type PageProps = { params: Promise<{ tripId: string }> };
 
@@ -444,6 +446,12 @@ export default function TripDetailPage({ params }: PageProps) {
     allRoutes.find((r) => r.id === id && r.selected_segment_id)
   ).length;
   const viewOrder: Array<"detail" | "split" | "payments"> = ["detail", "split", "payments"];
+  const tabClass = (view: "detail" | "split" | "payments") =>
+    `flex flex-1 items-center justify-center gap-1.5 border-b-2 py-3 text-center text-sm font-medium transition-colors sm:py-3.5 ${
+      activeView === view
+        ? "border-white font-semibold text-white"
+        : "border-transparent text-white/60 hover:text-white"
+    }`;
 
   if (authLoading || (!user && !trip)) {
     return (
@@ -514,41 +522,32 @@ export default function TripDetailPage({ params }: PageProps) {
             <button
               type="button"
               onClick={() => setActiveView("detail")}
-              className={`flex-1 border-b-2 py-3 text-center text-sm font-medium transition-colors sm:py-3.5 ${
-                activeView === "detail"
-                  ? "border-white text-white font-semibold"
-                  : "border-transparent text-white/60 hover:text-white"
-              }`}
+              className={tabClass("detail")}
               role="tab"
               aria-selected={activeView === "detail"}
             >
-              🗺 ルート管理
+              <RouteIcon className={TAB_ICON_CLASS} aria-hidden />
+              <span>ルート管理</span>
             </button>
             <button
               type="button"
               onClick={() => setActiveView("split")}
-              className={`flex-1 border-b-2 py-3 text-center text-sm font-medium transition-colors sm:py-3.5 ${
-                activeView === "split"
-                  ? "border-white text-white font-semibold"
-                  : "border-transparent text-white/60 hover:text-white"
-              }`}
+              className={tabClass("split")}
               role="tab"
               aria-selected={activeView === "split"}
             >
-              💰 割り勘計算
+              <ReceiptJapaneseYen className={TAB_ICON_CLASS} aria-hidden />
+              <span>割り勘計算</span>
             </button>
             <button
               type="button"
               onClick={() => setActiveView("payments")}
-              className={`flex-1 border-b-2 py-3 text-center text-sm font-medium transition-colors sm:py-3.5 ${
-                activeView === "payments"
-                  ? "border-white text-white font-semibold"
-                  : "border-transparent text-white/60 hover:text-white"
-              }`}
+              className={tabClass("payments")}
               role="tab"
               aria-selected={activeView === "payments"}
             >
-              ✅ 搭乗者管理
+              <User className={TAB_ICON_CLASS} aria-hidden />
+              <span>搭乗者管理</span>
             </button>
           </nav>
         </header>
