@@ -33,6 +33,7 @@ export default function TripDetailPage({ params }: PageProps) {
   >({});
   const [loadingRouteId, setLoadingRouteId] = useState<string | null>(null);
   const [includeRouteIds, setIncludeRouteIds] = useState<string[]>([]);
+  const [isAddingRoute, setIsAddingRoute] = useState(false);
   const [payment, setPayment] = useState<PaymentMethod>("ETC");
   const [loading, setLoading] = useState(true);
   const [activeView, setActiveView] = useState<"detail" | "split">("detail");
@@ -49,6 +50,8 @@ export default function TripDetailPage({ params }: PageProps) {
       destination: current.destination,
       departure_time: current.departure_time,
       time_type: current.time_type,
+      use_highways: current.use_highways,
+      use_tolls: current.use_tolls,
     }),
     []
   );
@@ -236,6 +239,7 @@ export default function TripDetailPage({ params }: PageProps) {
   const addRoute = useCallback(
     async () => {
       if (!tripId) return;
+      setIsAddingRoute(true);
       try {
         const newDay = await daysApi.create(tripId, { date: todayStr() });
         const newRoute = await routesApi.create(newDay.id, {
@@ -249,6 +253,8 @@ export default function TripDetailPage({ params }: PageProps) {
         }));
       } catch {
         // ignore
+      } finally {
+        setIsAddingRoute(false);
       }
     },
     [tripId]
@@ -257,6 +263,25 @@ export default function TripDetailPage({ params }: PageProps) {
   const removeRoute = useCallback(
     async (dayId: string, routeId: string) => {
       const dayRoutes = routesByDayId[dayId] ?? [];
+      const route = dayRoutes.find((r) => r.id === routeId);
+      const day = days.find((d) => d.id === dayId);
+      if (!route || !day) return;
+
+      const savedSegments = segmentsByRouteId[routeId] ?? [];
+      const wasIncluded = includeRouteIds.includes(routeId);
+
+      // 即時UIから消す
+      setRoutesByDayId((prev) => ({
+        ...prev,
+        [dayId]: (prev[dayId] ?? []).filter((r) => r.id !== routeId),
+      }));
+      setIncludeRouteIds((ids) => ids.filter((id) => id !== routeId));
+      setSegmentsByRouteId((prev) => {
+        const next = { ...prev };
+        delete next[routeId];
+        return next;
+      });
+
       try {
         if (dayRoutes.length <= 1 && tripId) {
           await daysApi.delete(tripId, dayId);
@@ -267,23 +292,29 @@ export default function TripDetailPage({ params }: PageProps) {
             return next;
           });
         } else {
-        await routesApi.delete(dayId, routeId);
+          await routesApi.delete(dayId, routeId);
+        }
+      } catch {
+        // 失敗時はロールバック
         setRoutesByDayId((prev) => ({
           ...prev,
-          [dayId]: (prev[dayId] ?? []).filter((r) => r.id !== routeId),
+          [dayId]: [...(prev[dayId] ?? []), route].sort((a, b) =>
+            a.created_at.localeCompare(b.created_at)
+          ),
         }));
+        setSegmentsByRouteId((prev) => ({ ...prev, [routeId]: savedSegments }));
+        if (wasIncluded) {
+          setIncludeRouteIds((ids) => [...ids, routeId]);
         }
-        setIncludeRouteIds((ids) => ids.filter((id) => id !== routeId));
-        setSegmentsByRouteId((prev) => {
-          const next = { ...prev };
-          delete next[routeId];
-          return next;
-        });
-      } catch {
-        // ignore
+        if (dayRoutes.length <= 1) {
+          setDays((prev) => {
+            if (prev.some((d) => d.id === dayId)) return prev;
+            return [...prev, day].sort((a, b) => a.date.localeCompare(b.date));
+          });
+        }
       }
     },
-    [routesByDayId, tripId]
+    [days, includeRouteIds, routesByDayId, segmentsByRouteId, tripId]
   );
 
   const searchRoute = useCallback(
@@ -349,21 +380,32 @@ export default function TripDetailPage({ params }: PageProps) {
       const route = (routesByDayId[day.id] ?? []).find((r) => r.id === routeId);
       if (!route) return;
       const nextInclude = !route.is_include_split;
+
+      // 楽観的更新
+      setRoutesByDayId((prev) => ({
+        ...prev,
+        [day.id]: (prev[day.id] ?? []).map((r) =>
+          r.id === routeId ? { ...r, is_include_split: nextInclude } : r
+        ),
+      }));
+      setIncludeRouteIds((ids) =>
+        nextInclude ? [...ids, routeId] : ids.filter((id) => id !== routeId)
+      );
       try {
         await routesApi.update(day.id, routeId, {
           is_include_split: nextInclude,
         });
+      } catch {
+        // ロールバック
         setRoutesByDayId((prev) => ({
           ...prev,
           [day.id]: (prev[day.id] ?? []).map((r) =>
-            r.id === routeId ? { ...r, is_include_split: nextInclude } : r
+            r.id === routeId ? { ...r, is_include_split: !nextInclude } : r
           ),
         }));
         setIncludeRouteIds((ids) =>
-          nextInclude ? [...ids, routeId] : ids.filter((id) => id !== routeId)
+          !nextInclude ? [...ids, routeId] : ids.filter((id) => id !== routeId)
         );
-      } catch {
-        // ignore
       }
     },
     [days, routesByDayId]
@@ -512,24 +554,24 @@ export default function TripDetailPage({ params }: PageProps) {
         )}
 
         <div className="space-y-3">
-          {routeCards.map(({ day, route, index }) => (
+          {routeCards.map((item) => (
             <RouteCard
-              key={route.id}
-              route={route}
-              idx={index}
+              key={item.route.id}
+              route={item.route}
+              idx={item.index}
               payment={payment}
-              segments={segmentsByRouteId[route.id] ?? []}
-              loading={loadingRouteId === route.id}
-              dayDate={day.date}
+              segments={segmentsByRouteId[item.route.id] ?? []}
+              loading={loadingRouteId === item.route.id}
+              dayDate={item.day.date}
               onUpdate={updateRoute}
               onUpdateDate={(routeId: string, value: string) =>
                 updateRoute(routeId, "day_date", value)
               }
-              onRemove={() => removeRoute(day.id, route.id)}
-              onSearch={() => searchRoute(day.id, route.id)}
-              onSelectSeg={(segId: string) => selectSeg(route.id, segId)}
-              selected={includeRouteIds.includes(route.id)}
-              onToggle={() => toggleInclude(route.id)}
+              onRemove={() => removeRoute(item.day.id, item.route.id)}
+              onSearch={() => searchRoute(item.day.id, item.route.id)}
+              onSelectSeg={(segId: string) => selectSeg(item.route.id, segId)}
+              selected={includeRouteIds.includes(item.route.id)}
+              onToggle={() => toggleInclude(item.route.id)}
               onPaymentChange={(nextPayment: PaymentMethod) => {
                 setPayment(nextPayment);
                 tripsApi.update(tripId, { payment_method: nextPayment }).then(loadTrip);
@@ -541,10 +583,15 @@ export default function TripDetailPage({ params }: PageProps) {
         <button
           type="button"
           onClick={addRoute}
-          className="mt-4 mb-5 flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-border bg-transparent py-3 text-sm font-medium text-muted transition-colors hover:border-accent hover:bg-accentDim/20 hover:text-accent"
+          disabled={isAddingRoute}
+          className="mt-4 mb-5 flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-border bg-transparent py-3 text-sm font-medium text-muted transition-colors hover:border-accent hover:bg-accentDim/20 hover:text-accent disabled:pointer-events-none disabled:opacity-60"
         >
-          <span>＋</span>
-          ルートを追加
+          {isAddingRoute ? (
+            <span className="h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-muted/30 border-t-muted" aria-hidden />
+          ) : (
+            <span>＋</span>
+          )}
+          {isAddingRoute ? "追加中…" : "ルートを追加"}
         </button>
 
         <Button

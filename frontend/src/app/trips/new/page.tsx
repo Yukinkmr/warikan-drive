@@ -3,13 +3,8 @@
 import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { tripsApi, daysApi, routesApi, API_BASE } from "@/lib/api";
+import { tripsApi, API_BASE } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
-
-function todayStr() {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-}
 
 export default function NewTripPage() {
   const router = useRouter();
@@ -35,8 +30,6 @@ export default function NewTripPage() {
           gas_price: 170,
           driver_weight: 0.5,
         });
-        const day = await daysApi.create(trip.id, { date: todayStr() });
-        await routesApi.create(day.id, { origin: "", destination: "" });
         router.replace(`/trips/${trip.id}`);
         return;
       } catch (e) {
