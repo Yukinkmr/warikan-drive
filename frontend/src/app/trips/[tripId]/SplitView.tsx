@@ -62,6 +62,7 @@ type SplitViewProps = {
   days: Day[];
   routesByDayId: Record<string, Route[]>;
   segmentsByRouteId: Record<string, RouteSegment[]>;
+  onSplitCalculated?: (split: Split) => void;
 };
 
 export function SplitView({
@@ -70,6 +71,7 @@ export function SplitView({
   days,
   routesByDayId,
   segmentsByRouteId,
+  onSplitCalculated,
 }: SplitViewProps) {
   const [extraCosts, setExtraCosts] = useState<ExtraCost[]>([]);
   const [splitResult, setSplitResult] = useState<Split | null>(null);
@@ -130,12 +132,13 @@ export function SplitView({
         people,
       });
       setSplitResult(result);
+      onSplitCalculated?.(result);
     } catch {
       // ignore
     } finally {
       setCalcLoading(false);
     }
-  }, [tripId, includedRoutes, extraCosts, fuelEff, gasPrice, driverWeight, people]);
+  }, [tripId, includedRoutes, extraCosts, fuelEff, gasPrice, driverWeight, people, onSplitCalculated]);
 
   const addExtraCost = useCallback(
     async (label: string, amount: number) => {

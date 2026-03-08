@@ -148,6 +148,7 @@ export default function TripDetailPage({ params }: PageProps) {
   const [routePaymentById, setRoutePaymentById] = useState<Record<string, PaymentMethod>>({});
   const [loading, setLoading] = useState(true);
   const [loadingRouteCards, setLoadingRouteCards] = useState(true);
+  const [paymentViewVersion, setPaymentViewVersion] = useState(0);
   const [activeView, setActiveView] = useState<"detail" | "split" | "payments">(() => {
     if (typeof window === "undefined") return "detail";
     const saved = localStorage.getItem(`trip:${tripId}:activeView`);
@@ -769,11 +770,12 @@ export default function TripDetailPage({ params }: PageProps) {
             days={days}
             routesByDayId={routesByDayId}
             segmentsByRouteId={segmentsByRouteId}
+            onSplitCalculated={() => setPaymentViewVersion((prev) => prev + 1)}
           />
         </div>
 
         <div className={activeView !== "payments" ? "hidden" : ""}>
-          <PaymentStatusView tripId={tripId} />
+          <PaymentStatusView key={`${tripId}:${paymentViewVersion}`} tripId={tripId} />
         </div>
         </main>
       </div>

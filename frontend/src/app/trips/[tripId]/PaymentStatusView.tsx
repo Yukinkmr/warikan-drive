@@ -31,6 +31,7 @@ export function PaymentStatusView({ tripId }: { tripId: string }) {
   const [updatingPaymentId, setUpdatingPaymentId] = useState<string | null>(null);
   const [editingNames, setEditingNames] = useState<Record<string, string>>({});
   const saveNameDebounceRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
+  const paymentRetryCountRef = useRef(0);
   const passengerMembers = useMemo(
     () => members.filter((member) => member.role === "passenger"),
     [members]
@@ -39,6 +40,10 @@ export function PaymentStatusView({ tripId }: { tripId: string }) {
     () => payments.filter((payment) => payment.member_role === "passenger"),
     [payments]
   );
+  const activePassengerMembers = useMemo(() => {
+    const paymentMemberIds = new Set(passengerPayments.map((payment) => payment.member_id));
+    return passengerMembers.filter((member) => paymentMemberIds.has(member.id));
+  }, [passengerMembers, passengerPayments]);
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -66,15 +71,40 @@ export function PaymentStatusView({ tripId }: { tripId: string }) {
   }, [loadData]);
 
   useEffect(() => {
+    if (!latestSplit) {
+      paymentRetryCountRef.current = 0;
+      return;
+    }
+    if (passengerPayments.length > 0) {
+      paymentRetryCountRef.current = 0;
+      return;
+    }
+    if (passengerMembers.length === 0) {
+      paymentRetryCountRef.current = 0;
+      return;
+    }
+    if (paymentRetryCountRef.current >= 1) {
+      return;
+    }
+
+    paymentRetryCountRef.current += 1;
+    const timer = setTimeout(() => {
+      loadData();
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [latestSplit, passengerPayments.length, passengerMembers.length, loadData]);
+
+  useEffect(() => {
     setEditingNames(
       Object.fromEntries(
-        passengerMembers.map((member) => [
+        activePassengerMembers.map((member) => [
           member.id,
           isGeneratedPassengerName(member.display_name) ? "" : member.display_name,
         ])
       )
     );
-  }, [passengerMembers]);
+  }, [activePassengerMembers]);
 
   useEffect(() => {
     return () => {
@@ -132,7 +162,7 @@ export function PaymentStatusView({ tripId }: { tripId: string }) {
   const rows = useMemo(
     () =>
       passengerPayments.map((payment) => {
-        const member = passengerMembers.find(
+        const member = activePassengerMembers.find(
           (candidate) => candidate.id === payment.member_id
         );
         return {
@@ -140,7 +170,7 @@ export function PaymentStatusView({ tripId }: { tripId: string }) {
           member,
         };
       }),
-    [passengerMembers, passengerPayments]
+    [activePassengerMembers, passengerPayments]
   );
 
   const paidCount = passengerPayments.filter((payment) => payment.status === "paid").length;
@@ -148,8 +178,6 @@ export function PaymentStatusView({ tripId }: { tripId: string }) {
   const paidTotal = passengerPayments
     .filter((payment) => payment.status === "paid")
     .reduce((sum, payment) => sum + payment.amount_yen, 0);
-  const needsRecalculation =
-    latestSplit !== null && passengerMembers.length > 0 && passengerPayments.length !== passengerMembers.length;
 
   if (loading) {
     return (
@@ -192,15 +220,12 @@ export function PaymentStatusView({ tripId }: { tripId: string }) {
           </div>
         ) : passengerPayments.length === 0 ? (
           <div className="mt-4 rounded-2xl border border-dashed border-border px-4 py-6 text-center text-sm text-muted">
-            人数を 2 人以上にして割り勘を計算すると、ここに搭乗者行が自動作成されます
+            {passengerMembers.length > 0
+              ? "最新の搭乗者行を反映中です…"
+              : "人数を 2 人以上にして割り勘を計算すると、ここに搭乗者行が自動作成されます"}
           </div>
         ) : (
           <>
-            {needsRecalculation && (
-              <div className="mt-4 rounded-2xl border border-accent/30 bg-accentDim px-4 py-3 text-sm text-text">
-                最新割り勘と搭乗者行の数が一致していません。人数を変更した場合は再計算してください
-              </div>
-            )}
             <div className="mt-4 grid gap-3 sm:grid-cols-3">
               <div className="rounded-2xl border border-green/30 bg-green/10 p-4">
                 <div className="text-xs font-semibold uppercase tracking-[0.16em] text-green">
@@ -228,7 +253,7 @@ export function PaymentStatusView({ tripId }: { tripId: string }) {
                 </div>
                 <div className="mt-1 text-2xl font-bold text-text">{passengerPayments.length}人</div>
                 <div className="mt-1 text-xs text-muted">
-                  登録同乗者 {passengerMembers.length}人
+                  最新割り勘の搭乗者
                 </div>
               </div>
             </div>
