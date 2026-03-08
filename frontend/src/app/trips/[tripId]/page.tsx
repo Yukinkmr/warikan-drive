@@ -36,7 +36,15 @@ export default function TripDetailPage({ params }: PageProps) {
   const [payment, setPayment] = useState<PaymentMethod>("ETC");
   const [loading, setLoading] = useState(true);
   const [loadingRouteCards, setLoadingRouteCards] = useState(true);
-  const [activeView, setActiveView] = useState<"detail" | "split" | "payments">("detail");
+  const [activeView, setActiveView] = useState<"detail" | "split" | "payments">(() => {
+    if (typeof window === "undefined") return "detail";
+    const saved = localStorage.getItem(`trip:${tripId}:activeView`);
+    return (saved as "detail" | "split" | "payments") || "detail";
+  });
+
+  useEffect(() => {
+    localStorage.setItem(`trip:${tripId}:activeView`, activeView);
+  }, [tripId, activeView]);
   const swipeStartX = useRef<number | null>(null);
   const updateRouteDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pendingUpdatesRef = useRef<
@@ -574,7 +582,67 @@ export default function TripDetailPage({ params }: PageProps) {
             swipeStartX.current = null;
           }}
         >
-        {activeView === "split" ? (
+        <div className={activeView !== "detail" ? "hidden" : ""}>
+          {routeCards.length === 0 && (
+            <div className="py-12 text-center text-sm text-muted">
+              まずルートを追加してください
+            </div>
+          )}
+
+          <div className="space-y-3">
+            {routeCards.map((item) => (
+              <RouteCard
+                key={item.route.id}
+                route={item.route}
+                idx={item.index}
+                payment={payment}
+                segments={segmentsByRouteId[item.route.id] ?? []}
+                loading={loadingRouteId === item.route.id}
+                dayDate={item.day.date}
+                onUpdate={updateRoute}
+                onUpdateDate={(routeId: string, value: string) =>
+                  updateRoute(routeId, "day_date", value)
+                }
+                onRemove={() => removeRoute(item.day.id, item.route.id)}
+                onSearch={() => searchRoute(item.day.id, item.route.id)}
+                onSelectSeg={(segId: string) => selectSeg(item.route.id, segId)}
+                selected={includeRouteIds.includes(item.route.id)}
+                onToggle={() => toggleInclude(item.route.id)}
+                onPaymentChange={(nextPayment: PaymentMethod) => {
+                  setPayment(nextPayment);
+                  tripsApi.update(tripId, { payment_method: nextPayment }).then(loadTrip);
+                }}
+              />
+            ))}
+          </div>
+
+          <button
+            type="button"
+            onClick={addRoute}
+            disabled={isAddingRoute}
+            className="mt-4 mb-5 flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-border bg-transparent py-3 text-sm font-medium text-muted transition-colors hover:border-accent hover:bg-accentDim/20 hover:text-accent disabled:pointer-events-none disabled:opacity-60"
+          >
+            {isAddingRoute ? (
+              <span className="h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-muted/30 border-t-muted" aria-hidden />
+            ) : (
+              <span>＋</span>
+            )}
+            {isAddingRoute ? "追加中…" : "ルートを追加"}
+          </button>
+
+          <Button
+            onClick={() => setActiveView("split")}
+            disabled={selCount === 0}
+            variant="primary"
+            className="mt-4 mb-5 flex w-full items-center justify-center "
+          >
+            {selCount > 0
+              ? `${selCount}ルートで割り勘計算 →`
+              : "経路を選択し「割り勘に含む」を設定してください"}
+          </Button>
+        </div>
+
+        <div className={activeView !== "split" ? "hidden" : ""}>
           <SplitView
             tripId={tripId}
             trip={trip}
@@ -582,71 +650,11 @@ export default function TripDetailPage({ params }: PageProps) {
             routesByDayId={routesByDayId}
             segmentsByRouteId={segmentsByRouteId}
           />
-        ) : activeView === "payments" ? (
-          <PaymentStatusView tripId={tripId} />
-        ) : (
-          <>
-        
-
-        {routeCards.length === 0 && (
-          <div className="py-12 text-center text-sm text-muted">
-            まずルートを追加してください
-          </div>
-        )}
-
-        <div className="space-y-3">
-          {routeCards.map((item) => (
-            <RouteCard
-              key={item.route.id}
-              route={item.route}
-              idx={item.index}
-              payment={payment}
-              segments={segmentsByRouteId[item.route.id] ?? []}
-              loading={loadingRouteId === item.route.id}
-              dayDate={item.day.date}
-              onUpdate={updateRoute}
-              onUpdateDate={(routeId: string, value: string) =>
-                updateRoute(routeId, "day_date", value)
-              }
-              onRemove={() => removeRoute(item.day.id, item.route.id)}
-              onSearch={() => searchRoute(item.day.id, item.route.id)}
-              onSelectSeg={(segId: string) => selectSeg(item.route.id, segId)}
-              selected={includeRouteIds.includes(item.route.id)}
-              onToggle={() => toggleInclude(item.route.id)}
-              onPaymentChange={(nextPayment: PaymentMethod) => {
-                setPayment(nextPayment);
-                tripsApi.update(tripId, { payment_method: nextPayment }).then(loadTrip);
-              }}
-            />
-          ))}
         </div>
 
-        <button
-          type="button"
-          onClick={addRoute}
-          disabled={isAddingRoute}
-          className="mt-4 mb-5 flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-border bg-transparent py-3 text-sm font-medium text-muted transition-colors hover:border-accent hover:bg-accentDim/20 hover:text-accent disabled:pointer-events-none disabled:opacity-60"
-        >
-          {isAddingRoute ? (
-            <span className="h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-muted/30 border-t-muted" aria-hidden />
-          ) : (
-            <span>＋</span>
-          )}
-          {isAddingRoute ? "追加中…" : "ルートを追加"}
-        </button>
-
-        <Button
-          onClick={() => setActiveView("split")}
-          disabled={selCount === 0}
-          variant="primary"
-          className="mt-4 mb-5 flex w-full items-center justify-center "
-        >
-          {selCount > 0
-            ? `${selCount}ルートで割り勘計算 →`
-            : "経路を選択し「割り勘に含む」を設定してください"}
-        </Button>
-          </>
-        )}
+        <div className={activeView !== "payments" ? "hidden" : ""}>
+          <PaymentStatusView tripId={tripId} />
+        </div>
         </main>
       </div>
     </div>

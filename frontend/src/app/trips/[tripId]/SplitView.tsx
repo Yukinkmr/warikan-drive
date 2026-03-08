@@ -105,6 +105,12 @@ export function SplitView({
     setDriverWeight(Number(trip.driver_weight) || 0.5);
   }, [trip]);
 
+  // ページ読み込み時に前回の計算結果を復元
+  useEffect(() => {
+    if (!tripId) return;
+    splitsApi.getLatest(tripId).then(setSplitResult).catch(() => {});
+  }, [tripId]);
+
   const includedRoutes = days.flatMap((d) =>
     (routesByDayId[d.id] ?? []).filter(
       (r) => r.is_include_split && r.selected_segment_id
