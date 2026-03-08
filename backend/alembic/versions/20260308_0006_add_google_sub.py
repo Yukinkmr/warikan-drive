@@ -1,16 +1,16 @@
 """add google_sub to users
 
-Revision ID: 20260307_0002
-Revises: 20260307_0001
-Create Date: 2026-03-07 15:30:00
+Revision ID: 20260308_0006
+Revises: 20260308_0005
+Create Date: 2026-03-08 13:00:00
 """
 
 from alembic import op
 import sqlalchemy as sa
 
 
-revision = "20260307_0002"
-down_revision = "20260307_0001"
+revision = "20260308_0006"
+down_revision = "20260308_0005"
 branch_labels = None
 depends_on = None
 

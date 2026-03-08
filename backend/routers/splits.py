@@ -13,6 +13,36 @@ from services.split_calculator import calculate_split
 router = APIRouter(prefix="/trips/{trip_id}/splits", tags=["splits"])
 
 
+def ensure_passenger_members(
+    *,
+    db: Session,
+    trip_id: UUID,
+    passenger_count: int,
+) -> list[Member]:
+    passengers = (
+        db.query(Member)
+        .filter(Member.trip_id == trip_id, Member.role == "passenger")
+        .order_by(Member.joined_at.asc())
+        .all()
+    )
+    if len(passengers) >= passenger_count:
+        return passengers[:passenger_count]
+
+    for index in range(len(passengers), passenger_count):
+        member = Member(
+            trip_id=trip_id,
+            display_name=f"搭乗者{index + 1}",
+            role="passenger",
+        )
+        db.add(member)
+        passengers.append(member)
+
+    db.commit()
+    for member in passengers:
+        db.refresh(member)
+    return passengers[:passenger_count]
+
+
 @router.post("", response_model=SplitResponse)
 def create_split(
     trip_id: UUID,
@@ -59,9 +89,9 @@ def create_split(
     fuel_eff = float(body.fuel_efficiency) if body.fuel_efficiency is not None else float(trip.fuel_efficiency)
     gas_price = body.gas_price if body.gas_price is not None else trip.gas_price
     driver_weight = float(body.driver_weight) if body.driver_weight is not None else float(trip.driver_weight)
-    members = db.query(Member).filter(Member.trip_id == trip_id).all()
-    people = body.people if body.people is not None else (max(1, len(members)) if members else 1)
+    people = body.people if body.people is not None else 1
     people = max(1, min(people, 99))
+    passenger_count = max(people - 1, 0)
 
     result = calculate_split(
         distance_km=distance_km,
@@ -87,12 +117,23 @@ def create_split(
     db.commit()
     db.refresh(split)
 
-    drivers = [m for m in members if m.role == "driver"]
-    passengers = [m for m in members if m.role == "passenger"]
-    for d in drivers:
-        db.add(Payment(split_id=split.id, member_id=d.id, amount_yen=result["driver_yen"], status="pending"))
-    for p in passengers:
-        db.add(Payment(split_id=split.id, member_id=p.id, amount_yen=result["passenger_yen"], status="pending"))
+    passengers = ensure_passenger_members(
+        db=db,
+        trip_id=trip_id,
+        passenger_count=passenger_count,
+    )
+    for index, passenger in enumerate(passengers, start=1):
+        db.add(
+            Payment(
+                split_id=split.id,
+                member_id=passenger.id,
+                amount_yen=result["passenger_yen"],
+                status="pending",
+                participant_role="passenger",
+                participant_label=passenger.display_name,
+                participant_order=index,
+            )
+        )
     db.commit()
 
     return split
