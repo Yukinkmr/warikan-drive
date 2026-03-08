@@ -7,11 +7,10 @@ import { tripsApi, daysApi, routesApi } from "@/lib/api";
 import type { Trip, Day, Route, RouteSegment } from "@/types";
 import type { PaymentMethod } from "@/types";
 import { RouteCard } from "@/components/RouteCard";
-import { Card } from "@/components/ui/Card";
-import { Pill } from "@/components/ui/Pill";
 import { Button } from "@/components/ui/Button";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { SplitView } from "@/app/trips/[tripId]/SplitView";
+import { PaymentStatusView } from "@/app/trips/[tripId]/PaymentStatusView";
 import { useAuth } from "@/contexts/AuthContext";
 import { todayStr } from "@/lib/utils";
 
@@ -37,7 +36,7 @@ export default function TripDetailPage({ params }: PageProps) {
   const [payment, setPayment] = useState<PaymentMethod>("ETC");
   const [loading, setLoading] = useState(true);
   const [loadingRouteCards, setLoadingRouteCards] = useState(true);
-  const [activeView, setActiveView] = useState<"detail" | "split">("detail");
+  const [activeView, setActiveView] = useState<"detail" | "split" | "payments">("detail");
   const swipeStartX = useRef<number | null>(null);
   const updateRouteDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pendingUpdatesRef = useRef<
@@ -72,22 +71,28 @@ export default function TripDetailPage({ params }: PageProps) {
     try {
       const list = await daysApi.list(tripId);
       setDays(list);
-      const nextRoutes: Record<string, Route[]> = {};
-      const nextSegments: Record<string, RouteSegment[]> = {};
-      for (const d of list) {
-        const routes = await routesApi.list(d.id);
-        nextRoutes[d.id] = routes;
-        for (const r of routes) {
-          if (r.selected_segment_id) {
-            try {
-              const { segments } = await routesApi.listSegments(r.id);
-              nextSegments[r.id] = segments;
-            } catch {
-              // ignore
-            }
+      const routeEntries = await Promise.all(
+        list.map(async (day) => [day.id, await routesApi.list(day.id)] as const)
+      );
+      const nextRoutes = Object.fromEntries(routeEntries);
+      const selectedRoutes = routeEntries.flatMap(([, routes]) =>
+        routes.filter((route) => route.selected_segment_id)
+      );
+      const segmentEntries = await Promise.all(
+        selectedRoutes.map(async (route) => {
+          try {
+            const { segments } = await routesApi.listSegments(route.id);
+            return [route.id, segments] as const;
+          } catch {
+            return null;
           }
-        }
-      }
+        })
+      );
+      const nextSegments = Object.fromEntries(
+        segmentEntries.filter(
+          (entry): entry is readonly [string, RouteSegment[]] => entry !== null
+        )
+      );
       setRoutesByDayId(nextRoutes);
       setSegmentsByRouteId((prev) => ({ ...prev, ...nextSegments }));
       setIncludeRouteIds((_) =>
@@ -105,8 +110,8 @@ export default function TripDetailPage({ params }: PageProps) {
       return;
     }
     if (!tripId) return;
-    loadTrip().then(() => setLoading(false));
-  }, [authLoading, user, router, tripId, loadTrip]);
+    Promise.all([loadTrip(), loadDays()]).finally(() => setLoading(false));
+  }, [authLoading, user, router, tripId, loadTrip, loadDays]);
 
   useEffect(() => {
     if (!user || !tripId || !trip) return;
@@ -438,6 +443,7 @@ export default function TripDetailPage({ params }: PageProps) {
   const selCount = includeRouteIds.filter((id) =>
     allRoutes.find((r) => r.id === id && r.selected_segment_id)
   ).length;
+  const viewOrder: Array<"detail" | "split" | "payments"> = ["detail", "split", "payments"];
 
   if (authLoading || (!user && !trip)) {
     return (
@@ -531,6 +537,19 @@ export default function TripDetailPage({ params }: PageProps) {
             >
               💰 割り勘計算
             </button>
+            <button
+              type="button"
+              onClick={() => setActiveView("payments")}
+              className={`flex-1 border-b-2 py-3 text-center text-sm font-medium transition-colors sm:py-3.5 ${
+                activeView === "payments"
+                  ? "border-white text-white font-semibold"
+                  : "border-transparent text-white/60 hover:text-white"
+              }`}
+              role="tab"
+              aria-selected={activeView === "payments"}
+            >
+              ✅ 搭乗者管理
+            </button>
           </nav>
         </header>
 
@@ -545,14 +564,26 @@ export default function TripDetailPage({ params }: PageProps) {
             const end = e.changedTouches[0]?.clientX ?? start;
             const diff = start - end;
             if (Math.abs(diff) >= SWIPE_THRESHOLD_PX) {
-              if (diff > 0) setActiveView("split");
-              else setActiveView("detail");
+              const currentIndex = viewOrder.indexOf(activeView);
+              const nextIndex =
+                diff > 0
+                  ? Math.min(currentIndex + 1, viewOrder.length - 1)
+                  : Math.max(currentIndex - 1, 0);
+              setActiveView(viewOrder[nextIndex]);
             }
             swipeStartX.current = null;
           }}
         >
         {activeView === "split" ? (
-          <SplitView tripId={tripId} />
+          <SplitView
+            tripId={tripId}
+            trip={trip}
+            days={days}
+            routesByDayId={routesByDayId}
+            segmentsByRouteId={segmentsByRouteId}
+          />
+        ) : activeView === "payments" ? (
+          <PaymentStatusView tripId={tripId} />
         ) : (
           <>
         

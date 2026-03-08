@@ -1,16 +1,19 @@
 from datetime import datetime
+from typing import Literal
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict
 
 
 class MemberCreate(BaseModel):
-    user_id: UUID
-    role: str  # driver | passenger
+    user_id: UUID | None = None
+    display_name: str | None = None
+    role: Literal["driver", "passenger"] = "passenger"
 
 
 class MemberUpdate(BaseModel):
-    role: str | None = None  # driver | passenger
+    display_name: str | None = None
+    role: Literal["driver", "passenger"] | None = None
 
 
 class MemberResponse(BaseModel):
@@ -18,6 +21,7 @@ class MemberResponse(BaseModel):
 
     id: UUID
     trip_id: UUID
-    user_id: UUID
-    role: str
+    user_id: UUID | None
+    display_name: str
+    role: Literal["driver", "passenger"]
     joined_at: datetime

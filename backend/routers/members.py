@@ -1,12 +1,13 @@
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from auth import get_current_user, get_trip_for_user
 from database import get_db
 from models import Member, User
-from schemas.member import MemberCreate, MemberUpdate, MemberResponse
+from schemas.member import MemberCreate, MemberResponse, MemberUpdate
 
 router = APIRouter(prefix="/trips/{trip_id}/members", tags=["members"])
 
@@ -19,9 +20,35 @@ def create_member(
     current_user: User = Depends(get_current_user),
 ):
     get_trip_for_user(trip_id, db, current_user)
-    member = Member(trip_id=trip_id, user_id=body.user_id, role=body.role)
+
+    user = None
+    if body.user_id:
+        user = db.query(User).filter(User.id == body.user_id).first()
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+
+    display_name = (body.display_name or (user.name if user else "")).strip()
+    if not display_name:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="display_name is required",
+        )
+
+    member = Member(
+        trip_id=trip_id,
+        user_id=body.user_id,
+        display_name=display_name,
+        role=body.role,
+    )
     db.add(member)
-    db.commit()
+    try:
+        db.commit()
+    except IntegrityError as exc:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Member already exists for this trip",
+        ) from exc
     db.refresh(member)
     return member
 
@@ -33,8 +60,12 @@ def list_members(
     current_user: User = Depends(get_current_user),
 ):
     get_trip_for_user(trip_id, db, current_user)
-    members = db.query(Member).filter(Member.trip_id == trip_id).all()
-    return members
+    return (
+        db.query(Member)
+        .filter(Member.trip_id == trip_id)
+        .order_by(Member.joined_at.asc())
+        .all()
+    )
 
 
 @router.patch("/{member_id}", response_model=MemberResponse)
@@ -46,14 +77,27 @@ def update_member(
     current_user: User = Depends(get_current_user),
 ):
     get_trip_for_user(trip_id, db, current_user)
-    member = db.query(Member).filter(
-        Member.id == member_id,
-        Member.trip_id == trip_id,
-    ).first()
+    member = (
+        db.query(Member)
+        .filter(Member.id == member_id, Member.trip_id == trip_id)
+        .first()
+    )
     if not member:
         raise HTTPException(status_code=404, detail="Member not found")
-    for k, v in body.model_dump(exclude_unset=True).items():
-        setattr(member, k, v)
+
+    updates = body.model_dump(exclude_unset=True)
+    if "display_name" in updates:
+        display_name = (updates["display_name"] or "").strip()
+        if not display_name:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="display_name is required",
+            )
+        updates["display_name"] = display_name
+
+    for key, value in updates.items():
+        setattr(member, key, value)
+
     db.commit()
     db.refresh(member)
     return member
@@ -67,10 +111,11 @@ def delete_member(
     current_user: User = Depends(get_current_user),
 ):
     get_trip_for_user(trip_id, db, current_user)
-    member = db.query(Member).filter(
-        Member.id == member_id,
-        Member.trip_id == trip_id,
-    ).first()
+    member = (
+        db.query(Member)
+        .filter(Member.id == member_id, Member.trip_id == trip_id)
+        .first()
+    )
     if not member:
         raise HTTPException(status_code=404, detail="Member not found")
     db.delete(member)
