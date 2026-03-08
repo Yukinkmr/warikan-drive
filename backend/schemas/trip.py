@@ -32,6 +32,8 @@ class TripResponse(BaseModel):
     driver_weight: float
     created_at: datetime
     updated_at: datetime
+    paid_count: int | None = None
+    pending_count: int | None = None
 
 
 class TripListResponse(BaseModel):
