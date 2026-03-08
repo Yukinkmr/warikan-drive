@@ -4,6 +4,7 @@ import { use, useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ReceiptJapaneseYen, Route as RouteIcon, User } from "lucide-react";
+import { AnimatePresence, motion } from "motion/react";
 import { tripsApi, daysApi, routesApi } from "@/lib/api";
 import type { Trip, Day, Route, RouteSegment } from "@/types";
 import type { PaymentMethod } from "@/types";
@@ -17,6 +18,7 @@ import { todayStr } from "@/lib/utils";
 
 const SWIPE_THRESHOLD_PX = 60;
 const TAB_ICON_CLASS = "h-[17px] w-[17px] shrink-0 stroke-[2px]";
+type TripView = "detail" | "split" | "payments";
 
 type PageProps = { params: Promise<{ tripId: string }> };
 
@@ -150,11 +152,12 @@ export default function TripDetailPage({ params }: PageProps) {
   const [loading, setLoading] = useState(true);
   const [loadingRouteCards, setLoadingRouteCards] = useState(true);
   const [paymentViewVersion, setPaymentViewVersion] = useState(0);
-  const [activeView, setActiveView] = useState<"detail" | "split" | "payments">(() => {
+  const [activeView, setActiveView] = useState<TripView>(() => {
     if (typeof window === "undefined") return "detail";
     const saved = localStorage.getItem(`trip:${tripId}:activeView`);
-    return (saved as "detail" | "split" | "payments") || "detail";
+    return (saved as TripView) || "detail";
   });
+  const [viewDirection, setViewDirection] = useState(1);
 
   useEffect(() => {
     localStorage.setItem(`trip:${tripId}:activeView`, activeView);
@@ -585,13 +588,24 @@ export default function TripDetailPage({ params }: PageProps) {
   const selCount = includeRouteIds.filter((id) =>
     allRoutes.find((r) => r.id === id && r.selected_segment_id)
   ).length;
-  const viewOrder: Array<"detail" | "split" | "payments"> = ["detail", "split", "payments"];
-  const tabClass = (view: "detail" | "split" | "payments") =>
-    `flex flex-1 items-center justify-center gap-1.5 border-b-2 py-3 text-center text-sm font-medium transition-colors sm:py-3.5 ${
+  const viewOrder: TripView[] = ["detail", "split", "payments"];
+  const switchView = useCallback(
+    (nextView: TripView) => {
+      if (nextView === activeView) return;
+      const currentIndex = viewOrder.indexOf(activeView);
+      const nextIndex = viewOrder.indexOf(nextView);
+      setViewDirection(nextIndex > currentIndex ? 1 : -1);
+      setActiveView(nextView);
+    },
+    [activeView, viewOrder]
+  );
+  const tabClass = (view: TripView) =>
+    `relative flex flex-1 items-center justify-center gap-1.5 py-3 text-center text-sm font-medium transition-colors sm:py-3.5 ${
       activeView === view
-        ? "border-text font-semibold text-text"
-        : "border-transparent text-muted hover:text-text"
+        ? "font-semibold text-text"
+        : "text-muted hover:text-text"
     }`;
+  const activePanelKey = activeView === "payments" ? `payments:${paymentViewVersion}` : activeView;
 
   if (authLoading || (!user && !trip)) {
     return (
@@ -658,33 +672,54 @@ export default function TripDetailPage({ params }: PageProps) {
           <nav className="mt-4 flex sm:mt-5" role="tablist">
             <button
               type="button"
-              onClick={() => setActiveView("detail")}
+              onClick={() => switchView("detail")}
               className={tabClass("detail")}
               role="tab"
               aria-selected={activeView === "detail"}
             >
               <RouteIcon className={TAB_ICON_CLASS} aria-hidden />
               <span>ルート管理</span>
+              {activeView === "detail" && (
+                <motion.span
+                  layoutId="trip-tab-underline"
+                  className="absolute inset-x-3 bottom-0 h-0.5 rounded-full bg-text"
+                  transition={{ type: "spring", stiffness: 360, damping: 32, mass: 0.8 }}
+                />
+              )}
             </button>
             <button
               type="button"
-              onClick={() => setActiveView("split")}
+              onClick={() => switchView("split")}
               className={tabClass("split")}
               role="tab"
               aria-selected={activeView === "split"}
             >
               <ReceiptJapaneseYen className={TAB_ICON_CLASS} aria-hidden />
               <span>割り勘計算</span>
+              {activeView === "split" && (
+                <motion.span
+                  layoutId="trip-tab-underline"
+                  className="absolute inset-x-3 bottom-0 h-0.5 rounded-full bg-text"
+                  transition={{ type: "spring", stiffness: 360, damping: 32, mass: 0.8 }}
+                />
+              )}
             </button>
             <button
               type="button"
-              onClick={() => setActiveView("payments")}
+              onClick={() => switchView("payments")}
               className={tabClass("payments")}
               role="tab"
               aria-selected={activeView === "payments"}
             >
               <User className={TAB_ICON_CLASS} aria-hidden />
               <span>搭乗者管理</span>
+              {activeView === "payments" && (
+                <motion.span
+                  layoutId="trip-tab-underline"
+                  className="absolute inset-x-3 bottom-0 h-0.5 rounded-full bg-text"
+                  transition={{ type: "spring", stiffness: 360, damping: 32, mass: 0.8 }}
+                />
+              )}
             </button>
           </nav>
         </header>
@@ -705,88 +740,115 @@ export default function TripDetailPage({ params }: PageProps) {
                 diff > 0
                   ? Math.min(currentIndex + 1, viewOrder.length - 1)
                   : Math.max(currentIndex - 1, 0);
-              setActiveView(viewOrder[nextIndex]);
+              switchView(viewOrder[nextIndex]);
             }
             swipeStartX.current = null;
           }}
         >
-        <div className={activeView !== "detail" ? "tab-panel--hidden" : "tab-panel--active"}>
-          {routeCards.length === 0 && (
-            <div className="py-12 text-center text-sm text-muted">
-              まずルートを追加してください
-            </div>
-          )}
+          <div className="relative overflow-hidden">
+            <AnimatePresence mode="wait" initial={false} custom={viewDirection}>
+              {activeView === "detail" ? (
+                <motion.div
+                  key={activePanelKey}
+                  custom={viewDirection}
+                  initial={{ opacity: 0, x: 28 * viewDirection, y: 4 }}
+                  animate={{ opacity: 1, x: 0, y: 0 }}
+                  exit={{ opacity: 0, x: -24 * viewDirection, y: -4 }}
+                  transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+                >
+                  {routeCards.length === 0 && (
+                    <div className="py-12 text-center text-sm text-muted">
+                      まずルートを追加してください
+                    </div>
+                  )}
 
-          <div className="space-y-3">
-            {routeCards.map((item) => (
-              <RouteCard
-                key={item.route.id}
-                route={item.route}
-                idx={item.index}
-                payment={routePaymentById[item.route.id] ?? ((trip.payment_method as PaymentMethod) || "ETC")}
-                segments={segmentsByRouteId[item.route.id] ?? []}
-                loading={loadingRouteId === item.route.id}
-                dayDate={item.day.date}
-                onUpdate={updateRoute}
-                onUpdateDate={(routeId: string, value: string) =>
-                  updateRoute(routeId, "day_date", value)
-                }
-                onRemove={() => removeRoute(item.day.id, item.route.id)}
-                onSearch={(paymentMethod) => searchRoute(item.day.id, item.route.id, paymentMethod)}
-                onSelectSeg={(segId: string) => selectSeg(item.route.id, segId)}
-                selected={includeRouteIds.includes(item.route.id)}
-                onToggle={() => toggleInclude(item.route.id)}
-                onPaymentChange={(nextPayment: PaymentMethod) => {
-                  setRoutePaymentById((prev) => ({
-                    ...prev,
-                    [item.route.id]: nextPayment,
-                  }));
-                }}
-                isRemoving={removingRouteIds.has(item.route.id)}
-              />
-            ))}
+                  <div className="space-y-3">
+                    {routeCards.map((item) => (
+                      <RouteCard
+                        key={item.route.id}
+                        route={item.route}
+                        idx={item.index}
+                        payment={routePaymentById[item.route.id] ?? ((trip.payment_method as PaymentMethod) || "ETC")}
+                        segments={segmentsByRouteId[item.route.id] ?? []}
+                        loading={loadingRouteId === item.route.id}
+                        dayDate={item.day.date}
+                        onUpdate={updateRoute}
+                        onUpdateDate={(routeId: string, value: string) =>
+                          updateRoute(routeId, "day_date", value)
+                        }
+                        onRemove={() => removeRoute(item.day.id, item.route.id)}
+                        onSearch={(paymentMethod) => searchRoute(item.day.id, item.route.id, paymentMethod)}
+                        onSelectSeg={(segId: string) => selectSeg(item.route.id, segId)}
+                        selected={includeRouteIds.includes(item.route.id)}
+                        onToggle={() => toggleInclude(item.route.id)}
+                        onPaymentChange={(nextPayment: PaymentMethod) => {
+                          setRoutePaymentById((prev) => ({
+                            ...prev,
+                            [item.route.id]: nextPayment,
+                          }));
+                        }}
+                        isRemoving={removingRouteIds.has(item.route.id)}
+                      />
+                    ))}
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={addRoute}
+                    disabled={isAddingRoute}
+                    className="mt-4 mb-5 flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-border bg-transparent py-3 text-sm font-medium text-muted transition-colors hover:border-accent hover:bg-accentDim/20 hover:text-accent disabled:pointer-events-none disabled:opacity-60"
+                  >
+                    {isAddingRoute ? (
+                      <span className="h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-muted/30 border-t-muted" aria-hidden />
+                    ) : (
+                      <span>＋</span>
+                    )}
+                    {isAddingRoute ? "追加中…" : "ルートを追加"}
+                  </button>
+
+                  <Button
+                    onClick={() => switchView("split")}
+                    disabled={selCount === 0}
+                    variant="primary"
+                    className="mt-4 mb-5 flex w-full items-center justify-center "
+                  >
+                    {selCount > 0
+                      ? `${selCount}ルートで割り勘計算 →`
+                      : "経路を選択し「割り勘に含む」を設定してください"}
+                  </Button>
+                </motion.div>
+              ) : activeView === "split" ? (
+                <motion.div
+                  key={activePanelKey}
+                  custom={viewDirection}
+                  initial={{ opacity: 0, x: 28 * viewDirection, y: 4 }}
+                  animate={{ opacity: 1, x: 0, y: 0 }}
+                  exit={{ opacity: 0, x: -24 * viewDirection, y: -4 }}
+                  transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+                >
+                  <SplitView
+                    tripId={tripId}
+                    trip={trip}
+                    days={days}
+                    routesByDayId={routesByDayId}
+                    segmentsByRouteId={segmentsByRouteId}
+                    onSplitCalculated={() => setPaymentViewVersion((prev) => prev + 1)}
+                  />
+                </motion.div>
+              ) : (
+                <motion.div
+                  key={activePanelKey}
+                  custom={viewDirection}
+                  initial={{ opacity: 0, x: 28 * viewDirection, y: 4 }}
+                  animate={{ opacity: 1, x: 0, y: 0 }}
+                  exit={{ opacity: 0, x: -24 * viewDirection, y: -4 }}
+                  transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+                >
+                  <PaymentStatusView key={`${tripId}:${paymentViewVersion}`} tripId={tripId} />
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
-
-          <button
-            type="button"
-            onClick={addRoute}
-            disabled={isAddingRoute}
-            className="mt-4 mb-5 flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-border bg-transparent py-3 text-sm font-medium text-muted transition-colors hover:border-accent hover:bg-accentDim/20 hover:text-accent disabled:pointer-events-none disabled:opacity-60"
-          >
-            {isAddingRoute ? (
-              <span className="h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-muted/30 border-t-muted" aria-hidden />
-            ) : (
-              <span>＋</span>
-            )}
-            {isAddingRoute ? "追加中…" : "ルートを追加"}
-          </button>
-
-          <Button
-            onClick={() => setActiveView("split")}
-            disabled={selCount === 0}
-            variant="primary"
-            className="mt-4 mb-5 flex w-full items-center justify-center "
-          >
-            {selCount > 0
-              ? `${selCount}ルートで割り勘計算 →`
-              : "経路を選択し「割り勘に含む」を設定してください"}
-          </Button>
-        </div>
-
-        <div className={activeView !== "split" ? "tab-panel--hidden" : "tab-panel--active"}>
-          <SplitView
-            tripId={tripId}
-            trip={trip}
-            days={days}
-            routesByDayId={routesByDayId}
-            segmentsByRouteId={segmentsByRouteId}
-            onSplitCalculated={() => setPaymentViewVersion((prev) => prev + 1)}
-          />
-        </div>
-
-        <div className={activeView !== "payments" ? "tab-panel--hidden" : "tab-panel--active"}>
-          <PaymentStatusView key={`${tripId}:${paymentViewVersion}`} tripId={tripId} />
-        </div>
         </main>
       </div>
     </div>
