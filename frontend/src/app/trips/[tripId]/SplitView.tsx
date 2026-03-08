@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { extraCostsApi, splitsApi } from "@/lib/api";
 import type {
   Trip,
@@ -82,6 +82,7 @@ export function SplitView({
   const [gasPrice, setGasPrice] = useState(170);
   const [driverWeight, setDriverWeight] = useState(0.5);
   const [people, setPeople] = useState(4);
+  const splitResultRef = useRef<HTMLDivElement | null>(null);
 
   const payment = (trip?.payment_method as PaymentMethod) || "ETC";
   const paymentLabel = payment === "CASH" ? "現金" : "ETC";
@@ -112,6 +113,17 @@ export function SplitView({
     if (!tripId) return;
     splitsApi.getLatest(tripId).then(setSplitResult).catch(() => {});
   }, [tripId]);
+
+  useEffect(() => {
+    if (!splitResult) return;
+    const frameId = window.requestAnimationFrame(() => {
+      splitResultRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "end",
+      });
+    });
+    return () => window.cancelAnimationFrame(frameId);
+  }, [splitResult]);
 
   const includedRoutes = days.flatMap((d) =>
     (routesByDayId[d.id] ?? []).filter(
@@ -325,57 +337,59 @@ export function SplitView({
       </Button>
 
       {splitResult && (
-        <Card
+        <div ref={splitResultRef}>
+          <Card
           className="border-accent shadow-glow"
-        >
-          <div className="text-center mb-4">
-            <div className="text-xs font-semibold uppercase tracking-[0.2em] text-muted mb-1.5">
-              合計コスト
-            </div>
-            <div className="text-4xl font-extrabold tracking-tight text-accent">
-              {formatYen(splitResult.total_yen)}
-            </div>
-            <div className="text-xs text-muted">
-              {Number(splitResult.distance_km).toFixed(1)} km 走行
-            </div>
-          </div>
-          <div className="border-t border-border pt-2.5 mb-3">
-            {[
-              ["🛣 高速料金", splitResult.toll_yen, `(${paymentLabel})`],
-              ["⛽ ガソリン代", splitResult.fuel_yen, ""],
-              ["🏨 追加費用", splitResult.extra_yen, ""],
-            ].map(([label, value, sub]) => (
-              <div
-                key={String(label)}
-                className="flex justify-between py-1.5 text-[13px]"
-              >
-                <span className="text-label">
-                  {label}{" "}
-                  {sub && (
-                    <span className="text-[11px] text-muted">{sub}</span>
-                  )}
-                </span>
-                <span className="text-text">{formatYen(Number(value))}</span>
+          >
+            <div className="text-center mb-4">
+              <div className="text-xs font-semibold uppercase tracking-[0.2em] text-muted mb-1.5">
+                合計コスト
               </div>
-            ))}
-          </div>
-          <div className="flex gap-3 mb-3">
-            <div className="flex-1 rounded-2xl border border-accent bg-statBg p-3 text-center shadow-glow">
-              <div className="text-xs font-medium text-muted mb-0.5">🚗 運転手</div>
-              <div className="font-bold text-lg text-accent">
-                {formatYen(splitResult.driver_yen)}
+              <div className="text-4xl font-extrabold tracking-tight text-accent">
+                {formatYen(splitResult.total_yen)}
+              </div>
+              <div className="text-xs text-muted">
+                {Number(splitResult.distance_km).toFixed(1)} km 走行
               </div>
             </div>
-            <div className="flex-1 rounded-2xl border border-border bg-statBg p-3 text-center">
-              <div className="text-xs font-medium text-muted mb-0.5">
-                🧑‍🤝‍🧑 同乗者×{Math.max(people - 1, 0)}
+            <div className="border-t border-border pt-2.5 mb-3">
+              {[
+                ["🛣 高速料金", splitResult.toll_yen, `(${paymentLabel})`],
+                ["⛽ ガソリン代", splitResult.fuel_yen, ""],
+                ["🏨 追加費用", splitResult.extra_yen, ""],
+              ].map(([label, value, sub]) => (
+                <div
+                  key={String(label)}
+                  className="flex justify-between py-1.5 text-[13px]"
+                >
+                  <span className="text-label">
+                    {label}{" "}
+                    {sub && (
+                      <span className="text-[11px] text-muted">{sub}</span>
+                    )}
+                  </span>
+                  <span className="text-text">{formatYen(Number(value))}</span>
+                </div>
+              ))}
+            </div>
+            <div className="flex gap-3 mb-3">
+              <div className="flex-1 rounded-2xl border border-accent bg-statBg p-3 text-center shadow-glow">
+                <div className="text-xs font-medium text-muted mb-0.5">🚗 運転手</div>
+                <div className="font-bold text-lg text-accent">
+                  {formatYen(splitResult.driver_yen)}
+                </div>
               </div>
-              <div className="font-bold text-lg text-text">
-                {formatYen(splitResult.passenger_yen)}
+              <div className="flex-1 rounded-2xl border border-border bg-statBg p-3 text-center">
+                <div className="text-xs font-medium text-muted mb-0.5">
+                  🧑‍🤝‍🧑 同乗者×{Math.max(people - 1, 0)}
+                </div>
+                <div className="font-bold text-lg text-text">
+                  {formatYen(splitResult.passenger_yen)}
+                </div>
               </div>
             </div>
-          </div>
-        </Card>
+          </Card>
+        </div>
       )}
     </>
   );
